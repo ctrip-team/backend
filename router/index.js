@@ -10,14 +10,17 @@ const router = express.Router()
  *     tags:
  *       - 首页内容
  *     summary: 获取首页游记信息
- *     description: 从数据库返回一部分游记信息,随机选取不连续的10条数据
+ *     description: 从数据库返回一部分游记信息,随机选取10条数据
  *     responses:
  *       200:
  *         description: 成功返回一部分游记信息
  */
+// , user WHERE travels.user_id=user.user_id;
 router.get('/index', (req, res) => {
-  db.query('SELECT * FROM travals WHERE status = 2 and id >= ( SELECT floor( RAND() * ( SELECT MAX( id ) FROM travals ) ) ) ORDER BY id LIMIT 10; ', (err, results) => {
-    res.json(results)
+  db.query('SELECT * FROM travals,user where travals.user_id=user.user_id', (err, results) => {
+    let resu = results.sort(() => Math.random() - 0.5);
+    let re = resu.slice(0, 10)
+    res.json(re)
   })
 })
 
