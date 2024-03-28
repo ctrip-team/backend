@@ -17,7 +17,7 @@ const router = express.Router()
  */
 // , user WHERE travels.user_id=user.user_id;
 router.get('/index', (req, res) => {
-  db.query('SELECT * FROM travals,user where travals.user_id=user.user_id', (err, results) => {
+  db.query('SELECT * FROM travals,user where travals.user_id=user.user_id and travals.status=2', (err, results) => {
     let resu = results.sort(() => Math.random() - 0.5);
     let re = resu.slice(0, 10)
     res.json(re)
