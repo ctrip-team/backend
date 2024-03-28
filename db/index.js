@@ -1,9 +1,10 @@
 const mysql = require('mysql');
+const { DBHOST, DBNAME, DBUSER, DBPASSWORD } = require('../config/index')
 const db = mysql.createConnection({
-    host: 'localhost',
-    user: 'root',
-    password: '510524xzw',
-    database: 'test'
+    host: DBHOST,
+    user: DBUSER,
+    password: DBPASSWORD,
+    database: DBNAME
 });
 
 db.connect((err) => {
