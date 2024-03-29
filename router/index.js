@@ -1,4 +1,4 @@
-const db = require('../db');
+const pool = require('../db');
 const express = require('express')
 const router = express.Router()
 
@@ -16,12 +16,22 @@ const router = express.Router()
  *         description: 成功返回一部分游记信息
  */
 // , user WHERE travels.user_id=user.user_id;
-router.get('/index', (req, res) => {
-  db.query('SELECT * FROM travals,user where travals.user_id=user.user_id and travals.status=2', (err, results) => {
-    let resu = results.sort(() => Math.random() - 0.5);
-    let re = resu.slice(0, 10)
-    res.json(re)
-  })
+router.get('/index', async (req, res) => {
+  const selectPassTravals = 'SELECT * FROM travals,user WHERE travals.user_id=user.user_id AND travals.status=2'
+  try {
+    const db = await pool.getConnection()
+    const [results, _] = await db.query(selectPassTravals)
+    if (results.length > 0) {
+      let resu = results.sort(() => Math.random() - 0.5);
+      let re = resu.slice(0, 10)
+      res.json({ msg: '查询成功', code: 2000, data: re });
+    } else {
+      res.json({ msg: '查询失败', code: 2001 });
+    }
+    db.release()
+  } catch (error) {
+    console.error(error);
+  }
 })
 
 /**
@@ -36,11 +46,21 @@ router.get('/index', (req, res) => {
  *       200:
  *         description: 成功返回一部分游记信息
  */
-router.get('/searchTitle', (req, res) => {
+router.get('/searchTitle', async (req, res) => {
   const { searchKey } = req.query
-  db.query(`SELECT * FROM travals WHERE title like '%${searchKey}%' or username like '%${searchKey}%'; `, (err, results) => {
-    res.json(results)
-  })
+  const selectWithTitle = `SELECT * FROM travals,user WHERE travals.user_id=user.user_id AND title LIKE '%${searchKey}%' OR username LIKE '%${searchKey}%'`
+  try {
+    const db = await pool.getConnection()
+    const [results, _] = await db.query(selectWithTitle)
+    if (results.length > 0) {
+      res.json({ msg: '查询成功', code: 2000, data: results });
+    } else {
+      res.json({ msg: '查询失败', code: 2001 });
+    }
+    db.release()
+  } catch (error) {
+    console.error(error);
+  }
 })
 
 
@@ -56,11 +76,21 @@ router.get('/searchTitle', (req, res) => {
  *       200:
  *         description: 成功返回
  */
-router.post('/addReadNum', (req, res) => {
+router.post('/addReadNum', async (req, res) => {
   const { id, readnum } = req.body
-  db.query(`UPDATE travals SET readnum = ${readnum} WHERE id = ${id} ; `, (err, results) => {
-    res.json(results)
-  })
+  const addReadNum = `UPDATE travals SET readnum = ${readnum} WHERE id = ${id} ; `
+  try {
+    const db = await pool.getConnection()
+    const [results, _] = await db.query(addReadNum)
+    if (results.affectedRows > 0) {
+      res.json({ msg: '增加成功', code: 2000 });
+    } else {
+      res.json({ msg: '增加失败', code: 2001 });
+    }
+    db.release()
+  } catch (error) {
+    console.error(error);
+  }
 })
 
 
