@@ -5,6 +5,7 @@ const { PORT } = require('./config')
 const userRouter = require('./router/user.js')
 const travelRouter = require('./router/travel.js')
 const indexRouter = require('./router/index.js')
+const myRouter = require('./router/my.js')
 const swaggerUi = require('swagger-ui-express')
 const swaggerSpec = require('./config/swagger.js')
 var bodyParser = require('body-parser')
@@ -18,6 +19,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/user', userRouter)
 app.use('/api/travel', travelRouter)
 app.use('/api/index', indexRouter)
+app.use('/api/my', myRouter)
 
 app.listen(PORT, () => {
     console.log(`Server running at http://127.0.0.1:${PORT}`);
