@@ -42,7 +42,7 @@ router.get('/get', async (req, res) => {
         });
 
         const results = await Promise.all(promises);
-        console.log('results', results);
+        db.release()
         res.json({ travelList: results });
     } catch (error) {
         console.error(error);
@@ -90,6 +90,47 @@ router.post('/uploadText', async (req, res) => {
         await db.query(insertTravelQuery)
         db.release()
         res.json({ msg: '标题和内容上传成功', travel_id });
+    } catch (error) {
+        console.error(error);
+    }
+})
+
+router.post('/pass', async (req, res) => {
+    const { travel_id } = req.body;
+    try {
+        const db = await pool.getConnection()
+        const updateQuery = `UPDATE travel SET status = '2' WHERE travel_id = ?`;
+        await db.query(updateQuery, [travel_id])
+        db.release()
+        res.json({ msg: '已通过' });
+    } catch (error) {
+        console.error(error);
+    }
+})
+
+router.post('/reject', async (req, res) => {
+    const { travel_id } = req.body;
+
+    try {
+        const db = await pool.getConnection()
+        const updateQuery = `UPDATE travel SET status = '1' WHERE travel_id = ?`;
+        await db.query(updateQuery, [travel_id])
+        db.release()
+        res.json({ msg: '已拒绝', travel_id });
+    } catch (error) {
+        console.error(error);
+    }
+})
+
+router.post('/delete', async (req, res) => {
+    const { travel_id } = req.body;
+
+    try {
+        const db = await pool.getConnection()
+        const updateQuery = `UPDATE travel SET status = '4' WHERE travel_id = ?`;
+        await db.query(updateQuery, [travel_id])
+        db.release()
+        res.json({ msg: '已逻辑删除' });
     } catch (error) {
         console.error(error);
     }
