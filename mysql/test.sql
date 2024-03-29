@@ -75,6 +75,7 @@ INSERT INTO `travel` VALUES ('d18e6bfa-121b-4b9e-8841-a68a6a609f20', 'hyperyz', 
 INSERT INTO `travel` VALUES ('e2feb721-f2f8-42a0-a19b-125b5be3fdb2', 'hyperyz', '123', '123', '0', '2024-03-27 22:05:51');
 INSERT INTO `travel` VALUES ('ef3f0ae1-0d02-4955-9a5d-4ec95bc96cd8', 'hyperyz', 'test', 'test', '0', '2024-03-27 22:16:40');
 
+
 -- ----------------------------
 -- Table structure for user
 -- ----------------------------

@@ -17,7 +17,7 @@ const router = express.Router()
  */
 // , user WHERE travels.user_id=user.user_id;
 router.get('/index', async (req, res) => {
-  const selectPassTravals = 'SELECT * FROM travals,user WHERE travals.user_id=user.user_id AND travals.status=2'
+  const selectPassTravals = 'SELECT * FROM travel,user,image WHERE travel.user_id=user.user_id AND travel.travel_id=image.travel_id AND travel.status=2'
   try {
     const db = await pool.getConnection()
     const [results, _] = await db.query(selectPassTravals)
@@ -48,7 +48,7 @@ router.get('/index', async (req, res) => {
  */
 router.get('/searchTitle', async (req, res) => {
   const { searchKey } = req.query
-  const selectWithTitle = `SELECT * FROM travals,user WHERE travals.user_id=user.user_id AND title LIKE '%${searchKey}%' OR username LIKE '%${searchKey}%'`
+  const selectWithTitle = `SELECT * FROM travel,user,image WHERE travel.user_id=user.user_id AND travel.travel_id=image.travel_id AND title LIKE '%${searchKey}%' OR username LIKE '%${searchKey}%'`
   try {
     const db = await pool.getConnection()
     const [results, _] = await db.query(selectWithTitle)
@@ -78,7 +78,7 @@ router.get('/searchTitle', async (req, res) => {
  */
 router.post('/addReadNum', async (req, res) => {
   const { id, readnum } = req.body
-  const addReadNum = `UPDATE travals SET readnum = ${readnum} WHERE id = ${id} ; `
+  const addReadNum = `UPDATE travel SET readnum = ${readnum} WHERE travel_id = ${id} ; `
   try {
     const db = await pool.getConnection()
     const [results, _] = await db.query(addReadNum)
