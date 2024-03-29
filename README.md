@@ -9,6 +9,7 @@
 ## image表：image_id,travel_id,image_url
 ## reviewer表：reviewer_id,username,password,role
 ## travel表：travel_id,user_id,title_content,status,created_at
+
 ## user表：user_id,username,password
 
 mysql下放了test数据库，可进行测试
