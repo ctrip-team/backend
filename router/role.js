@@ -1,7 +1,9 @@
 const pool = require('../db');
 const express = require('express')
 const router = express.Router()
-
+const jwt = require('jsonwebtoken')
+const { secret } = require('../config/')
+let checkTokenMiddleware = require('../middlewares/checkTokenMiddleware')
 /**
  * @swagger
  * /api/role/login:
@@ -31,12 +33,12 @@ const router = express.Router()
  */
 router.post('/login', async (req, res) => {
     const { username, password } = req.body
-    const checkLoginQuery = `SELECT * FROM reviewer WHERE username = '${username}' AND password = '${password}'`;
+    const checkLoginQuery = `SELECT * FROM role WHERE username = '${username}' AND password = '${password}'`;
     try {
         const db = await pool.getConnection()
         const [results, _] = await db.query(checkLoginQuery)
         if (results.length > 0) {
-            res.json({ msg: '登录成功', code: 2000, review_id: results[0].reviewer_id });
+            res.json({ msg: '登录成功', code: 2000, role_id: results[0].role_id, token: jwt.sign({ username, password }, secret, { expiresIn: 60 * 10 }) });
         } else {
             res.json({ msg: '用户名或密码错误', code: 2001 });
         }
@@ -73,7 +75,7 @@ router.post('/login', async (req, res) => {
  *       200:
  *         description: 注册成功
  */
-router.post('/register', async (req, res) => {
+router.post('/register', checkTokenMiddleware, async (req, res) => {
     const { username, password, role } = req.body
     const is_admin = role === '审核员' ? 0 : 1
     const sql = `SELECT * FROM role WHERE username = '${username}'`;
@@ -96,7 +98,7 @@ router.post('/register', async (req, res) => {
     }
 })
 
-router.post('/delete', async (req, res) => {
+router.post('/delete', checkTokenMiddleware, async (req, res) => {
     const { username } = req.body
     const sql = `DELETE FROM role WHERE username = ?`;
 
@@ -112,7 +114,7 @@ router.post('/delete', async (req, res) => {
 })
 
 
-router.get('/getRoles/:start/:num', async (req, res) => {
+router.get('/getRoles/:start/:num', checkTokenMiddleware, async (req, res) => {
     const { start, num } = req.params
 
     const sql = `SELECT * FROM role LIMIT ${parseInt(start)}, ${parseInt(num)}`;
