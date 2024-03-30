@@ -4,7 +4,8 @@ const router = express.Router()
 const fs = require('fs').promises
 const path = require('path')
 const multer = require('multer');
-const upload = multer({ dest: path.join(__dirname, '../uploads/imgs') })
+const uploadImage = multer({ dest: path.join(__dirname, '../uploads/imgs') })
+const uploadVideo = multer({ dest: path.join(__dirname, '../uploads/videos') })
 const uuid = require('uuid');
 
 /**
@@ -50,7 +51,7 @@ router.get('/get', async (req, res) => {
 });
 
 
-router.post('/uploadImages/:travel_id', upload.single('image'), async (req, res) => {
+router.post('/uploadImages/:travel_id', uploadImage.single('image'), async (req, res) => {
     const file = req.file;
     const travel_id = req.params.travel_id;
     const filePath = file.path;
@@ -72,6 +73,28 @@ router.post('/uploadImages/:travel_id', upload.single('image'), async (req, res)
     } catch (error) {
         console.error(error);
         res.status(500).send('存储图片失败');
+    }
+})
+
+router.post('/uploadVideo/:travel_id', uploadVideo.single('video'), async (req, res) => {
+    const file = req.file;
+    const travel_id = req.params.travel_id;
+    const filePath = file.path;
+    const videoUrl = `http://localhost:3000/videos/${file.originalname}`;
+
+    try {
+        const data = await fs.readFile(filePath);
+        const newFilePath = `uploads/videos/${file.originalname}`;
+        await fs.writeFile(newFilePath, data);
+        await fs.unlink(filePath);
+        const insertVideoQuery = `UPDATE travel SET video_url = ? WHERE travel_id = ?`
+        const db = await pool.getConnection();
+        await db.query(insertVideoQuery, [videoUrl, travel_id]);
+        db.release();
+        res.json({ msg: '视频上传成功' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('存储视频失败');
     }
 })
 
