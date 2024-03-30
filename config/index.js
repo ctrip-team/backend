@@ -12,5 +12,5 @@ module.exports = {
     // DBPASSWORD: '1234',
 
     PORT: 3000,
-    secret: '' //密钥    
+    secret: 'weareno1' //密钥    
 }
