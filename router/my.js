@@ -1,6 +1,7 @@
 const pool = require('../db');
 const express = require('express')
 const router = express.Router()
+const axios = require('axios');
 
 /**
  * @swagger
@@ -75,23 +76,34 @@ router.post('/deltravel', async (req, res) => {
  *       200:
  *         description: 成功注册
  */
-// , user WHERE travels.user_id=user.user_id;
-// router.post('/register', async (req, res) => {
-//   const { username, password } = req.body
-//   const deleteTraval = `UPDATE user SET user`
-//   try {
-//     const db = await pool.getConnection()
-//     const [results, _] = await db.query(deleteTraval)
-//     if (results.affectedRows > 0) {
-//       res.json({ msg: '删除成功', code: 2000 });
-//     } else {
-//       res.json({ msg: '删除失败', code: 2001 });
-//     }
-//     db.release()
-//   } catch (error) {
-//     console.error(error);
-//   }
-// })
+router.post('/register', async (req, res) => {
+  const { username, password, code } = req.body
+  try {
+    const appid = 'wx4a6ea8fe7db1ee8e';
+    const secret = 'd81028996caa82a8bbf415405ebb5b88';
+    const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${appid}&secret=${secret}&js_code=${code}&grant_type=authorization_code`;
+    const response = await axios.get(url);
+    const data = response.data;
+    if (data.openid) {
+      const openid = data.openid;
+      const db = await pool.getConnection()
+      const registerSQL = `INSERT INTO user VALUE('${openid}', '${username}','${password}','https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png');`
+      const [results, _] = await db.query(registerSQL)
+      if (results.affectedRows > 0) {
+        res.json({ msg: '注册成功', code: 2000 });
+      } else {
+        res.json({ msg: '注册失败', code: 2001 });
+      }
+      db.release()
+    } else {
+      // 处理错误情况  
+      res.json({ msg: '获取用户openid失败', code: 2001 });
+    }
+  } catch (error) {
+    // 处理请求过程中的异常  
+    console.error(error);
+  }
+})
 
 
 /**
