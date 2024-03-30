@@ -18,7 +18,7 @@ const axios = require('axios')
 // , user WHERE travels.user_id=user.user_id;
 router.get('/mytravels', async (req, res) => {
   const { user_id } = req.query
-  const selectMyTravals = `SELECT * FROM travel,user,image WHERE travel.user_id=user.user_id AND travel.travel_id=image.travel_id AND travel.user_id=${user_id}`
+  const selectMyTravals = `SELECT * FROM travel,user,image WHERE travel.user_id=user.user_id AND travel.travel_id=image.travel_id AND travel.user_id='${user_id}'`
   try {
     const db = await pool.getConnection()
     const [results, _] = await db.query(selectMyTravals)
@@ -48,7 +48,7 @@ router.get('/mytravels', async (req, res) => {
 // , user WHERE travels.user_id=user.user_id;
 router.post('/deltravel', async (req, res) => {
   const { travel_id } = req.body
-  const deleteTraval = `DELETE FROM travel WHERE travel_id=${travel_id}`
+  const deleteTraval = `DELETE FROM travel WHERE travel_id='${travel_id}'`
   try {
     const db = await pool.getConnection()
     const [results, _] = await db.query(deleteTraval)
