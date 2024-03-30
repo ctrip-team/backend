@@ -78,10 +78,10 @@ router.get('/searchTitle', async (req, res) => {
  */
 router.post('/addReadNum', async (req, res) => {
   const { id, readnum } = req.body
-  const addReadNum = `UPDATE travel SET views = ${readnum} WHERE travel_id = ${id} ; `
+  const addReadNum = `UPDATE travel SET views = ? WHERE travel_id = ? ; `
   try {
     const db = await pool.getConnection()
-    const [results, _] = await db.query(addReadNum)
+    const [results, _] = await db.query(addReadNum, [readnum, id])
     if (results.affectedRows > 0) {
       res.json({ msg: '增加成功', code: 2000 });
     } else {

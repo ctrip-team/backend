@@ -17,10 +17,10 @@ const router = express.Router()
 // , user WHERE travels.user_id=user.user_id;
 router.get('/mytravels', async (req, res) => {
   const { user_id } = req.query
-  const selectMyTravals = `SELECT * FROM travel,user,image WHERE travel.user_id=user.user_id AND travel.travel_id=image.travel_id AND travel.user_id=${user_id}`
+  const selectMyTravals = `SELECT * FROM travel,user,image WHERE travel.user_id=user.user_id AND travel.travel_id=image.travel_id AND travel.user_id=?`
   try {
     const db = await pool.getConnection()
-    const [results, _] = await db.query(selectMyTravals)
+    const [results, _] = await db.query(selectMyTravals, [user_id])
     if (results.length > 0) {
       res.json({ msg: '查询成功', code: 2000, data: results });
     } else {

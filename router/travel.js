@@ -77,8 +77,7 @@ router.post('/uploadImages/:travel_id', upload.single('image'), async (req, res)
 
 
 router.post('/uploadText', async (req, res) => {
-    const { title, content } = req.body;
-    const userId = 'hyperyz';
+    const { title, content, userId } = req.body;
     const travel_id = uuid.v4();
 
     const insertTravelQuery = `
@@ -95,11 +94,29 @@ router.post('/uploadText', async (req, res) => {
     }
 })
 
+router.post('/getById', async (req, res) => {
+    const { travel_id } = req.body;
+
+    const sql = `SELECT * FROM travel,user WHERE travel.travel_id=? AND travel.user_id=user.user_id  `
+    const sqlImage = `SELECT image_url FROM image WHERE travel_id=?`
+    try {
+        const db = await pool.getConnection()
+        const [results] = await db.query(sql, [travel_id])
+
+        const [imageResults] = await db.query(sqlImage, [travel_id]);
+        const imageUrls = imageResults.map(image => image.image_url);
+        db.release()
+        res.json({ msg: '获取游记成功', travel: { ...results[0], imgs: imageUrls } });
+    } catch (error) {
+        console.error(error);
+    }
+})
+
 router.post('/pass', async (req, res) => {
     const { travel_id } = req.body;
     try {
         const db = await pool.getConnection()
-        const updateQuery = `UPDATE travel SET status = '2' WHERE travel_id = ?`;
+        const updateQuery = `UPDATE travel SET status = '2' WHERE travel_id = ? `;
         await db.query(updateQuery, [travel_id])
         db.release()
         res.json({ msg: '已通过' });
@@ -113,7 +130,7 @@ router.post('/reject', async (req, res) => {
 
     try {
         const db = await pool.getConnection()
-        const updateQuery = `UPDATE travel SET status = '1', reason = ? WHERE travel_id = ?`;
+        const updateQuery = `UPDATE travel SET status = '1', reason = ? WHERE travel_id = ? `;
         await db.query(updateQuery, [reason, travel_id])
         db.release()
         res.json({ msg: '已拒绝', travel_id });
@@ -127,7 +144,7 @@ router.post('/delete', async (req, res) => {
 
     try {
         const db = await pool.getConnection()
-        const updateQuery = `UPDATE travel SET status = '4' WHERE travel_id = ?`;
+        const updateQuery = `UPDATE travel SET status = '4' WHERE travel_id = ? `;
         await db.query(updateQuery, [travel_id])
         db.release()
         res.json({ msg: '已逻辑删除' });
