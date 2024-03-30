@@ -109,12 +109,12 @@ router.post('/pass', async (req, res) => {
 })
 
 router.post('/reject', async (req, res) => {
-    const { travel_id } = req.body;
+    const { travel_id, reason } = req.body;
 
     try {
         const db = await pool.getConnection()
-        const updateQuery = `UPDATE travel SET status = '1' WHERE travel_id = ?`;
-        await db.query(updateQuery, [travel_id])
+        const updateQuery = `UPDATE travel SET status = '1', reason = ? WHERE travel_id = ?`;
+        await db.query(updateQuery, [reason, travel_id])
         db.release()
         res.json({ msg: '已拒绝', travel_id });
     } catch (error) {

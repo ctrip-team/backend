@@ -9,7 +9,8 @@ module.exports = {
     // DBHOST: 'localhost',
     // DBNAME: 'test',
     // DBUSER: 'root',
-    // DBPASSWORD: '510524xzw',
+    // DBPASSWORD: '1234',
+
     PORT: 3000,
     secret: '' //密钥    
 }
