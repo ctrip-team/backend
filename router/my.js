@@ -18,10 +18,11 @@ const axios = require('axios')
 // , user WHERE travels.user_id=user.user_id;
 router.get('/mytravels', async (req, res) => {
   const { user_id } = req.query
-  const selectMyTravals = `SELECT * FROM travel,user,image WHERE travel.user_id=user.user_id AND travel.travel_id=image.travel_id AND travel.user_id=?`
+  const selectMyTravals = `SELECT * FROM travel,user,image WHERE travel.user_id=user.user_id AND travel.travel_id=image.travel_id AND travel.user_id="${user_id}"`
   try {
     const db = await pool.getConnection()
-    const [results, _] = await db.query(selectMyTravals, [user_id])
+    // , [user_id]
+    const [results, _] = await db.query(selectMyTravals)
     if (results.length > 0) {
       res.json({ msg: '查询成功', code: 2000, data: results })
     } else {
@@ -48,7 +49,7 @@ router.get('/mytravels', async (req, res) => {
 // , user WHERE travels.user_id=user.user_id;
 router.post('/deltravel', async (req, res) => {
   const { travel_id } = req.body
-  const deleteTraval = `DELETE FROM travel WHERE travel_id='${travel_id}'`
+  const deleteTraval = `DELETE FROM travel WHERE travel_id="${travel_id}"`
   try {
     const db = await pool.getConnection()
     const [results, _] = await db.query(deleteTraval)
@@ -87,14 +88,14 @@ router.post('/register', async (req, res) => {
     if (data.openid) {
       const openid = data.openid;
       const db = await pool.getConnection()
-      const checkUser = `SELECT * FROM user WHERE username='${username}'`
+      const checkUser = `SELECT * FROM user WHERE username="${username}"`
       const [results1, _1] = await db.query(checkUser)
       if (results1.length > 0) {
         res.json({ msg: '用户名重复', code: 2002 })
         db.release()
       }
       else {
-        const registerSQL = `INSERT INTO user VALUE('${openid}', '${username}','${password}','https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png');`
+        const registerSQL = `INSERT INTO user VALUE("${openid}", "${username}","${password}",'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png');`
         const [results2, _2] = await db.query(registerSQL)
         if (results2.affectedRows > 0) {
           res.json({ msg: '注册成功', code: 2000 })
@@ -126,10 +127,9 @@ router.post('/register', async (req, res) => {
  *       200:
  *         description: 成功登录
  */
-// , user WHERE travels.user_id=user.user_id;
 router.post('/login', async (req, res) => {
   const { username, password } = req.body
-  const matchUser = `SELECT * FROM user WHERE username='${username}' AND password='${password}'`
+  const matchUser = `SELECT * FROM user WHERE username="${username}" AND password="${password}"`
   try {
     const db = await pool.getConnection()
     const [results, _] = await db.query(matchUser)
@@ -137,6 +137,40 @@ router.post('/login', async (req, res) => {
       res.json({ msg: '登录成功', code: 2000, data: results });
     } else {
       res.json({ msg: '登录失败', code: 2001 });
+    }
+    db.release()
+  } catch (error) {
+    console.error(error);
+  }
+})
+
+
+
+/**
+ * @swagger
+ * /index:
+ *   get:
+ *     tags:
+ *       - 获取用户数据
+ *     summary: 获取用户端用户的总浏览量和游记数数据
+ *     description: 获取用户端用户的总浏览量和游记数数据
+ *     responses:
+ *       200:
+ *         description: 成功返回数据
+ */
+router.get('/mydata', async (req, res) => {
+  const { id } = req.query
+  const totalView = `SELECT SUM(views) FROM travel WHERE user_id="${id}"`
+  const totalTravel = `SELECT COUNT(*) FROM travel WHERE user_id="${id}"`
+  try {
+    const db = await pool.getConnection()
+    const [results1, _1] = await db.query(totalView)
+    const [results2, _2] = await db.query(totalTravel)
+    if (results1.length > 0 && results2.length > 0) {
+      const re = { totalView: results1[0]['SUM(views)'], totalTravel: results2[0]['COUNT(*)'] }
+      res.json({ msg: '查询成功', code: 2000, data: re });
+    } else {
+      res.json({ msg: '查询失败', code: 2001 });
     }
     db.release()
   } catch (error) {
