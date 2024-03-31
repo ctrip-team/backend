@@ -48,7 +48,7 @@ router.get('/index', async (req, res) => {
  */
 router.get('/searchTitle', async (req, res) => {
   const { searchKey } = req.query
-  const selectWithTitle = `SELECT * FROM travel,user,image WHERE travel.user_id=user.user_id AND travel.travel_id=image.travel_id AND status="${2}" AND title LIKE "%${searchKey}%" OR username LIKE "%${searchKey}%" `
+  const selectWithTitle = `SELECT * FROM travel,user,image WHERE travel.user_id=user.user_id AND travel.travel_id=image.travel_id AND status="${2}" AND (title LIKE "%${searchKey}%" OR username LIKE "%${searchKey}%") `
   try {
     const db = await pool.getConnection()
     const [results, _] = await db.query(selectWithTitle)
