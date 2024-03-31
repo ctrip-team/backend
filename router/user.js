@@ -1,8 +1,11 @@
 const pool = require('../db');
 const express = require('express')
 const router = express.Router()
+const fs = require('fs').promises
+const path = require('path')
 const uuid = require('uuid');
-
+const multer = require('multer');
+const uploadAvatar = multer({ dest: path.join(__dirname, '../uploads/avatars') })
 /**
  * @swagger
  * /api/user/test:
@@ -123,5 +126,29 @@ router.post('/register', async (req, res) => {
 })
 
 
+router.post('/update', uploadAvatar.single('avatar'), async (req, res) => {
+    const { username, password, userId } = req.body;
+    const avatarFile = req.file;
+    const newPath = `http://localhost:3000/avatars/${avatarFile.originalname}`
+    const checkUserQuery = `SELECT * FROM user WHERE user_id = ?`;
+    const updateUserQuery = `UPDATE user SET username = ?, password = ?, avatar = ? WHERE user_id = ?`;
+    try {
+        const db = await pool.getConnection()
+        const [existingUsers] = await db.query(checkUserQuery, [userId]);
+        if (existingUsers[0].username !== username) {
+            db.release()
+            res.json({ msg: '用户名已存在' });
+        } else {
+            const data = await fs.readFile(avatarFile.path);
+            await fs.writeFile(`uploads/avatars/${avatarFile.originalname}`, data);
+            await fs.unlink(avatarFile.path);
+            await db.query(updateUserQuery, [username, password, newPath, userId])
+            db.release()
+            res.json({ msg: '更新成功' });
+        }
+    } catch (error) {
+        console.error(error);
+    }
+})
 
 module.exports = router

@@ -37,8 +37,9 @@ router.post('/login', async (req, res) => {
     try {
         const db = await pool.getConnection()
         const [results, _] = await db.query(checkLoginQuery)
+        console.log('role', results);
         if (results.length > 0) {
-            res.json({ msg: '登录成功', code: 2000, role_id: results[0].role_id, token: jwt.sign({ username, password }, secret, { expiresIn: 60 * 10 }) });
+            res.json({ msg: '登录成功', code: 2000, role: results[0], token: jwt.sign({ username, password }, secret, { expiresIn: 60 * 10 }) });
         } else {
             res.json({ msg: '用户名或密码错误', code: 2001 });
         }
