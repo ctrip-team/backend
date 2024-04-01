@@ -25,6 +25,6 @@ app.use('/api/my', myRouter)
 
 
 app.listen(PORT, () => {
-    console.log(`Server running at http://127.0.0.1:${PORT}`);
-    console.log(`For API docs, http://127.0.0.1:${PORT}/api-docs`);
+    console.log(`Server running at http://192.168.0.102:${PORT}`);
+    console.log(`For API docs, http://192.168.0.102:${PORT}/api-docs`);
 });
