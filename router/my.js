@@ -15,7 +15,6 @@ const axios = require('axios')
  *       200:
  *         description: 成功返回游记信息
  */
-// , user WHERE travels.user_id=user.user_id;
 router.get('/mytravels', async (req, res) => {
   const { user_id } = req.query
   const selectMyTravals = `SELECT * FROM travel,user,image WHERE travel.user_id=user.user_id AND travel.travel_id=image.travel_id AND travel.user_id="${user_id}"`
@@ -46,7 +45,6 @@ router.get('/mytravels', async (req, res) => {
  *       200:
  *         description: 成功删除指定游记信息
  */
-// , user WHERE travels.user_id=user.user_id;
 router.post('/deltravel', async (req, res) => {
   const { travel_id } = req.body
   const deleteTraval = `DELETE FROM travel WHERE travel_id="${travel_id}"`
@@ -167,6 +165,9 @@ router.get('/mydata', async (req, res) => {
     const [results1, _1] = await db.query(totalView)
     const [results2, _2] = await db.query(totalTravel)
     if (results1.length > 0 && results2.length > 0) {
+      if (results1[0]['SUM(views)'] == null) {
+        results1[0]['SUM(views)'] = 0
+      }
       const re = { totalView: results1[0]['SUM(views)'], totalTravel: results2[0]['COUNT(*)'] }
       res.json({ msg: '查询成功', code: 2000, data: re });
     } else {
