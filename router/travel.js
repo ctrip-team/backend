@@ -101,15 +101,14 @@ router.post('/uploadVideo/:travel_id', uploadVideo.single('video'), async (req, 
 
 router.post('/uploadText', async (req, res) => {
     const { title, content, userId } = req.body;
+
+    const contentWithBr = content.replace(/\n/g, '<br>');
     const travel_id = uuid.v4();
 
-    const insertTravelQuery = `
-        INSERT INTO travel (travel_id, user_id, title, content, status, created_at) 
-        VALUES ('${travel_id}', '${userId}', '${title}', '${content}', 0, CURRENT_TIMESTAMP)
-    `;
+    const insertTravelQuery = `INSERT INTO travel (travel_id, user_id, title, content, status, created_at) VALUES (?, ?, ?, ?, 0, CURRENT_TIMESTAMP)`;
     try {
         const db = await pool.getConnection()
-        await db.query(insertTravelQuery)
+        await db.query(insertTravelQuery, [travel_id, userId, title, contentWithBr])
         db.release()
         res.json({ msg: '标题和内容上传成功', travel_id });
     } catch (error) {
