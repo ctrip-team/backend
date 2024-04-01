@@ -117,9 +117,7 @@ router.post('/delete', checkTokenMiddleware, async (req, res) => {
 
 router.get('/getRoles/:start/:num', checkTokenMiddleware, async (req, res) => {
     const { start, num } = req.params
-
     const sql = `SELECT * FROM role LIMIT ${parseInt(start)}, ${parseInt(num)}`;
-
     try {
         const db = await pool.getConnection()
         const [results, _] = await db.query(sql)
@@ -133,6 +131,18 @@ router.get('/getRoles/:start/:num', checkTokenMiddleware, async (req, res) => {
         console.error(error);
     }
 
+})
+
+router.get('/getTop', checkTokenMiddleware, async (req, res) => {
+    const sql = `SELECT * FROM role ORDER BY review_count DESC LIMIT 5;`;
+    try {
+        const db = await pool.getConnection()
+        const [results] = await db.query(sql)
+        db.release()
+        res.json({ msg: '获取成功', tops: results })
+    } catch (error) {
+        console.error(error);
+    }
 })
 
 module.exports = router
