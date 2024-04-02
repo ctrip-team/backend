@@ -48,7 +48,7 @@ router.get('/index', async (req, res) => {
  */
 router.get('/searchTitle', async (req, res) => {
   const { searchKey } = req.query
-  const selectWithTitle = `SELECT * FROM travel t JOIN user u ON t.user_id = u.user_id JOIN (SELECT travel_id,MIN(image_id) AS min_image_id FROM image GROUP BY travel_id) min_image ON t.travel_id = min_image.travel_id JOIN image i ON min_image.min_image_id = i.image_id WHERE t.status = '${2}' And (u.username LIKE '%${searchKey}%' OR t.title LIKE '%${searchKey}%'); `
+  const selectWithTitle = `SELECT * FROM travel t JOIN user u ON t.user_id = u.user_id JOIN (SELECT travel_id,MIN(image_id) AS min_image_id FROM image GROUP BY travel_id) min_image ON t.travel_id = min_image.travel_id JOIN image i ON min_image.min_image_id = i.image_id WHERE t.status = ${'2'} And (u.username LIKE '%${searchKey}%' OR t.title LIKE '%${searchKey}%'); `
   try {
     const db = await pool.getConnection()
     const [results, _] = await db.query(selectWithTitle)
