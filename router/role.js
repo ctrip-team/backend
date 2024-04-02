@@ -37,7 +37,6 @@ router.post('/login', async (req, res) => {
     try {
         const db = await pool.getConnection()
         const [results, _] = await db.query(checkLoginQuery)
-        console.log('role', results);
         if (results.length > 0) {
             res.json({ msg: '登录成功', code: 2000, role: results[0], token: jwt.sign({ username, password }, secret, { expiresIn: 60 * 10 }) });
         } else {
@@ -108,6 +107,21 @@ router.post('/delete', checkTokenMiddleware, async (req, res) => {
         await db.query(sql, [username])
         db.release()
         res.json({ msg: '用户删除成功' });
+    } catch (error) {
+        console.error(error);
+    }
+
+})
+
+router.post('/update', checkTokenMiddleware, async (req, res) => {
+    const { username, role, password, role_id } = req.body
+    const sql = `UPDATE role SET username = ?, is_admin = ?, password = ? WHERE role_id = ?;`;
+    const is_admin = role === '管理员' ? 1 : 0
+    try {
+        const db = await pool.getConnection()
+        await db.query(sql, [username, is_admin, password, role_id])
+        db.release()
+        res.json({ msg: '编辑成功' });
     } catch (error) {
         console.error(error);
     }
