@@ -17,7 +17,7 @@ const axios = require('axios')
  */
 router.get('/mytravels', async (req, res) => {
   const { user_id } = req.query
-  const selectMyTravals = `SELECT * FROM travel t JOIN user u ON t.user_id = u.user_id LEFT JOIN image i ON t.travel_id = i.travel_id WHERE t.status <> 4 AND t.user_id = '${user_id}' GROUP BY t.travel_id ORDER BY CASE WHEN t.status = '0' THEN '0' WHEN t.status = '1' THEN '1' ELSE '2' END, t.created_at DESC;`
+  const selectMyTravals = `SELECT * FROM travel t JOIN user u ON t.user_id = u.user_id LEFT JOIN image i ON t.travel_id = i.travel_id WHERE t.status <> 4 AND t.user_id = '${user_id}' GROUP BY t.travel_id ORDER BY CASE WHEN t.status = '1' THEN '1' WHEN t.status = '0' THEN '0' ELSE '2' END, t.created_at DESC;`
   try {
     const db = await pool.getConnection()
     const [results, _] = await db.query(selectMyTravals)
@@ -46,7 +46,7 @@ router.get('/mytravels', async (req, res) => {
  */
 router.post('/deltravel', async (req, res) => {
   const { travel_id } = req.body
-  const deleteTraval = `DELETE FROM travel WHERE travel_id="${travel_id}"`
+  const deleteTraval = `UPDATE travel SET status = '4' WHERE travel_id="${travel_id}"`
   try {
     const db = await pool.getConnection()
     const [results, _] = await db.query(deleteTraval)
