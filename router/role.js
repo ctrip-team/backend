@@ -37,7 +37,6 @@ router.post('/login', async (req, res) => {
     try {
         const db = await pool.getConnection()
         const [results, _] = await db.query(checkLoginQuery)
-        console.log('role', results);
         if (results.length > 0) {
             res.json({ msg: '登录成功', code: 2000, role: results[0], token: jwt.sign({ username, password }, secret, { expiresIn: 60 * 10 }) });
         } else {
@@ -114,12 +113,25 @@ router.post('/delete', checkTokenMiddleware, async (req, res) => {
 
 })
 
+router.post('/update', checkTokenMiddleware, async (req, res) => {
+    const { username, role, password, role_id } = req.body
+    const sql = `UPDATE role SET username = ?, is_admin = ?, password = ? WHERE role_id = ?;`;
+    const is_admin = role === '管理员' ? 1 : 0
+    try {
+        const db = await pool.getConnection()
+        await db.query(sql, [username, is_admin, password, role_id])
+        db.release()
+        res.json({ msg: '编辑成功' });
+    } catch (error) {
+        console.error(error);
+    }
+
+})
+
 
 router.get('/getRoles/:start/:num', checkTokenMiddleware, async (req, res) => {
     const { start, num } = req.params
-
     const sql = `SELECT * FROM role LIMIT ${parseInt(start)}, ${parseInt(num)}`;
-
     try {
         const db = await pool.getConnection()
         const [results, _] = await db.query(sql)
@@ -133,6 +145,18 @@ router.get('/getRoles/:start/:num', checkTokenMiddleware, async (req, res) => {
         console.error(error);
     }
 
+})
+
+router.get('/getTop', checkTokenMiddleware, async (req, res) => {
+    const sql = `SELECT * FROM role ORDER BY review_count DESC LIMIT 5;`;
+    try {
+        const db = await pool.getConnection()
+        const [results] = await db.query(sql)
+        db.release()
+        res.json({ msg: '获取成功', tops: results })
+    } catch (error) {
+        console.error(error);
+    }
 })
 
 module.exports = router

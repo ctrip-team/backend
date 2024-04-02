@@ -31,7 +31,7 @@ const uuid = require('uuid');
  */
 router.get('/get', async (req, res) => {
     try {
-        const getTravelQuery = `SELECT * FROM travel ORDER BY created_at DESC`;
+        const getTravelQuery = `SELECT * FROM travel WHERE status <> 4 ORDER BY created_at DESC`;
         const db = await pool.getConnection()
         const [travelList, _] = await db.query(getTravelQuery);
 
@@ -50,6 +50,24 @@ router.get('/get', async (req, res) => {
     }
 });
 
+router.get('/getDelete', async (req, res) => {
+    const getDeleteTravelQuery = `SELECT * FROM travel WHERE status='${4}'`
+    try {
+        const db = await pool.getConnection()
+        const [travelList] = await db.query(getDeleteTravelQuery)
+        const promises = travelList.map(async (travel) => {
+            const getImagesQuery = `SELECT image_url FROM image WHERE travel_id = ?`;
+            const [imageResults] = await db.query(getImagesQuery, [travel.travel_id]);
+            const images = imageResults.map(image => image.image_url);
+            return { ...travel, imgs: images, key: travel.travel_id };
+        });
+        const results = await Promise.all(promises);
+        db.release()
+        res.json({ deleteTravelList: results });
+    } catch (error) {
+        console.error(error);
+    }
+})
 
 router.post('/uploadImages/:travel_id', uploadImage.single('image'), async (req, res) => {
     const file = req.file;
@@ -170,6 +188,19 @@ router.post('/delete', async (req, res) => {
         await db.query(updateQuery, [travel_id])
         db.release()
         res.json({ msg: '已逻辑删除' });
+    } catch (error) {
+        console.error(error);
+    }
+})
+
+router.post('/recover', async (req, res) => {
+    const { travel_id } = req.body;
+    try {
+        const db = await pool.getConnection()
+        const updateQuery = `UPDATE travel SET status = '0' WHERE travel_id = ? `;
+        await db.query(updateQuery, [travel_id])
+        db.release()
+        res.json({ msg: '数据已恢复' });
     } catch (error) {
         console.error(error);
     }
