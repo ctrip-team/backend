@@ -15,9 +15,8 @@ const router = express.Router()
  *       200:
  *         description: 成功返回一部分游记信息
  */
-// , user WHERE travels.user_id=user.user_id;
 router.get('/index', async (req, res) => {
-  const selectPassTravals = `SELECT * FROM travel,user,image WHERE travel.user_id=user.user_id AND travel.travel_id=image.travel_id AND status="${2}"`
+  const selectPassTravals = `SELECT * FROM travel t JOIN user u ON t.user_id = u.user_id JOIN (SELECT travel_id, MIN(image_id) AS min_image_id FROM image GROUP BY travel_id) AS sub ON t.travel_id = sub.travel_id JOIN image i ON sub.travel_id = i.travel_id AND sub.min_image_id = i.image_id WHERE t.status = '2' GROUP BY t.travel_id ORDER BY t.created_at DESC LIMIT 10;`
   try {
     const db = await pool.getConnection()
     const [results, _] = await db.query(selectPassTravals)
