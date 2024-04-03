@@ -196,16 +196,18 @@ router.get('/infodata', async (req, res) => {
   const getTravelList = `SELECT * FROM travel t JOIN user u ON t.user_id = u.user_id LEFT JOIN image i ON t.travel_id = i.travel_id WHERE t.status = '2' AND t.user_id = '${id}' GROUP BY t.travel_id ORDER BY t.created_at DESC;`
   const getInfoDataOfTravels = `SELECT COUNT(*) FROM travel WHERE user_id="${id}" AND status <> '4'`
   const getInfoDataOfViews = `SELECT SUM(views) FROM travel WHERE user_id="${id}" AND status <> '4'`
+  const getUserInfo = `SELECT * FROM user WHERE user_id="${id}"`
   try {
     const db = await pool.getConnection()
     const [results1, _1] = await db.query(getInfoDataOfViews)
     const [results2, _2] = await db.query(getInfoDataOfTravels)
     const [results3, _3] = await db.query(getTravelList)
+    const [results4, _4] = await db.query(getUserInfo)
     if (results1.length > 0 && results2.length > 0) {
       if (results1[0]['SUM(views)'] == null) {
         results1[0]['SUM(views)'] = 0
       }
-      const re = { totalView: results1[0]['SUM(views)'], totalTravel: results2[0]['COUNT(*)'], travelList: results3 }
+      const re = { totalView: results1[0]['SUM(views)'], totalTravel: results2[0]['COUNT(*)'], travelList: results3, userInfo: results4[0] }
       res.json({ msg: '查询成功', code: 2000, data: re });
     }
     else {

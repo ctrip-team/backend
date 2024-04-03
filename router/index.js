@@ -62,6 +62,35 @@ router.get('/searchTitle', async (req, res) => {
   }
 })
 
+/**
+ * @swagger
+ * /index:
+ *   get:
+ *     tags:
+ *       - 搜索用户
+ *     summary: 获取搜索用户的结果
+ *     description: 从数据库返回一部分结果信息
+ *     responses:
+ *       200:
+ *         description: 成功返回一部分用户信息
+ */
+router.get('/searchUser', async (req, res) => {
+  const { searchKey } = req.query
+  const selectWithUser = `SELECT u.username,SUM(t.views) AS total_views,COUNT(DISTINCT t.travel_id) AS total_travels FROM user u JOIN travel t ON u.user_id = t.user_id WHERE u.username LIKE '%${searchKey}%' GROUP BY u.username;`
+  try {
+    const db = await pool.getConnection()
+    const [results, _] = await db.query(selectWithUser)
+    if (results.length > 0) {
+      res.json({ msg: '查询成功', code: 2000, data: results });
+    } else {
+      res.json({ msg: '查询失败', code: 2001 });
+    }
+    db.release()
+  } catch (error) {
+    console.error(error);
+  }
+})
+
 
 /**
  * @swagger
