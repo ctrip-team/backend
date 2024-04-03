@@ -5,7 +5,7 @@ const axios = require('axios')
 
 /**
  * @swagger
- * /index:
+ * /my:
  *   get:
  *     tags:
  *       - 我的游记内容
@@ -34,8 +34,8 @@ router.get('/mytravels', async (req, res) => {
 
 /**
  * @swagger
- * /index:
- *   get:
+ * /my:
+ *   post:
  *     tags:
  *       - 删除游记
  *     summary: 删除指定游记
@@ -64,8 +64,8 @@ router.post('/deltravel', async (req, res) => {
 
 /**
  * @swagger
- * /index:
- *   get:
+ * /my:
+ *   post:
  *     tags:
  *       - 用户端注册
  *     summary: 用户端用户注册
@@ -114,8 +114,8 @@ router.post('/register', async (req, res) => {
 
 /**
  * @swagger
- * /index:
- *   get:
+ * /my:
+ *   post:
  *     tags:
  *       - 用户端登录
  *     summary: 用户端用户登录
@@ -145,7 +145,7 @@ router.post('/login', async (req, res) => {
 
 /**
  * @swagger
- * /index:
+ * /my:
  *   get:
  *     tags:
  *       - 获取用户数据
@@ -177,5 +177,45 @@ router.get('/mydata', async (req, res) => {
     console.error(error);
   }
 })
+
+
+/**
+ * @swagger
+ * /my:
+ *   get:
+ *     tags:
+ *       - 获取指定用户相关数据
+ *     summary: 获取用户端指定用户信息、游记等数据
+ *     description: 获取用户端指定用户信息、游记等数据
+ *     responses:
+ *       200:
+ *         description: 成功返回数据
+ */
+router.get('/infodata', async (req, res) => {
+  const { id } = req.query
+  const getTravelList = `SELECT * FROM travel t JOIN user u ON t.user_id = u.user_id LEFT JOIN image i ON t.travel_id = i.travel_id WHERE t.status = '2' AND t.user_id = '${id}' GROUP BY t.travel_id ORDER BY t.created_at DESC;`
+  const getInfoDataOfTravels = `SELECT COUNT(*) FROM travel WHERE user_id="${id}" AND status <> '4'`
+  const getInfoDataOfViews = `SELECT SUM(views) FROM travel WHERE user_id="${id}" AND status <> '4'`
+  try {
+    const db = await pool.getConnection()
+    const [results1, _1] = await db.query(getInfoDataOfViews)
+    const [results2, _2] = await db.query(getInfoDataOfTravels)
+    const [results3, _3] = await db.query(getTravelList)
+    if (results1.length > 0 && results2.length > 0) {
+      if (results1[0]['SUM(views)'] == null) {
+        results1[0]['SUM(views)'] = 0
+      }
+      const re = { totalView: results1[0]['SUM(views)'], totalTravel: results2[0]['COUNT(*)'], travelList: results3 }
+      res.json({ msg: '查询成功', code: 2000, data: re });
+    }
+    else {
+      res.json({ msg: '查询失败', code: 2001 });
+    }
+    db.release()
+  } catch (error) {
+    console.error(error);
+  }
+})
+
 
 module.exports = router
