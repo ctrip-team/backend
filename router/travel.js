@@ -69,6 +69,24 @@ router.get('/getDelete', async (req, res) => {
     }
 })
 
+router.post('/getVideos', async (req, res) => {
+    const { travel_id } = req.body;
+    try {
+        const getTravelQuery = `
+            SELECT *, 
+            CASE WHEN travel_id = ? THEN 0 ELSE 1 END AS order_flag 
+            FROM travel 
+            WHERE video_url IS NOT NULL 
+            ORDER BY order_flag`;
+        const db = await pool.getConnection();
+        const [travels] = await db.query(getTravelQuery, [travel_id]);
+        db.release();
+        res.json({ travels });
+    } catch (error) {
+        console.error(error);
+    }
+})
+
 router.post('/uploadImages/:travel_id', uploadImage.single('image'), async (req, res) => {
     const file = req.file;
     const travel_id = req.params.travel_id;

@@ -125,6 +125,20 @@ router.post('/register', async (req, res) => {
     }
 })
 
+router.post('/getById', async (req, res) => {
+    const { user_id } = req.body
+    const sql = `SELECT * FROM user WHERE user_id = ?`;
+    try {
+        const db = await pool.getConnection()
+        const [user] = await db.query(sql, [user_id]);
+        db.release()
+        res.json({ user: user[0] });
+
+    } catch (error) {
+        console.error(error);
+    }
+})
+
 
 router.post('/update', uploadAvatar.single('avatar'), async (req, res) => {
     const { username, password, userId } = req.body;
@@ -146,6 +160,7 @@ router.post('/update', uploadAvatar.single('avatar'), async (req, res) => {
         console.error(error);
     }
 })
+
 
 router.post('/updateInfo', async (req, res) => {
     const { username, password, userId } = req.body;
