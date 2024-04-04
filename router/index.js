@@ -76,7 +76,7 @@ router.get('/searchTitle', async (req, res) => {
  */
 router.get('/searchUser', async (req, res) => {
   const { searchKey } = req.query
-  const selectWithUser = `SELECT u.username,SUM(t.views) AS total_views,COUNT(DISTINCT t.travel_id) AS total_travels FROM user u JOIN travel t ON u.user_id = t.user_id WHERE u.username LIKE '%${searchKey}%' GROUP BY u.username;`
+  const selectWithUser = `SELECT u.username, COALESCE(SUM(t.views), 0) AS total_views, COALESCE(COUNT(DISTINCT t.travel_id), 0) AS total_travels  FROM user u LEFT JOIN travel t ON u.user_id = t.user_id WHERE u.username LIKE '%${searchKey}%' GROUP BY u.username;`
   try {
     const db = await pool.getConnection()
     const [results, _] = await db.query(selectWithUser)
