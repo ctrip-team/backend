@@ -117,6 +117,116 @@ router.post('/register', async (req, res) => {
  * /my:
  *   post:
  *     tags:
+ *       - 用户端微信注册
+ *     summary: 用户端用户微信注册
+ *     description: 将用户输入的用户名、密码和头像信息存储到数据库中
+ *     responses:
+ *       200:
+ *         description: 成功注册
+ */
+router.post('/registerByWeChat', async (req, res) => {
+  let { username, password, avatar, openId } = req.body
+  try {
+    const db = await pool.getConnection()
+    const checkUser = `SELECT * FROM user WHERE username="${username}"`
+    let [results1, _1] = await db.query(checkUser)
+    //为保证用户名不重复，此处将对重复用户名做增加随机尾号处理
+    if (results1.length > 0) {
+      while (true) {
+        const name = `${username}${Math.floor(Math.random() * 1000)}`
+        username = name
+        [results1, _1] = await db.query(checkUser)
+        if (results1.length === 0) {
+          break;
+        }
+      }
+    }
+    else {
+      const registerSQL = `INSERT INTO user VALUE("${openId}", "${username}","${password}","${avatar}")`
+      const [results2, _2] = await db.query(registerSQL)
+      if (results2.affectedRows > 0) {
+        res.json({ msg: '通过微信注册成功', code: 2000 })
+      } else {
+        res.json({ msg: '通过微信注册失败', code: 2001 })
+      }
+      db.release()
+    }
+  } catch (error) {
+    // 处理请求过程中的异常  
+    console.error(error);
+  }
+})
+
+
+/**
+ * @swagger
+ * /my:
+ *   post:
+ *     tags:
+ *       - 用户端微信ID获取
+ *     summary: 用户端用户微信ID获取
+ *     description: 获取用户微信openid返回给前端
+ *     responses:
+ *       200:
+ *         description: 成功返回
+ */
+router.post('/getOpenId', async (req, res) => {
+  let { code } = req.body
+  try {
+    const appid = 'wx4a6ea8fe7db1ee8e';
+    const secret = 'd81028996caa82a8bbf415405ebb5b88';
+    const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${appid}&secret=${secret}&js_code=${code}&grant_type=authorization_code`
+    const response = await axios.get(url);
+    const data = response.data;
+    if (data.openid) {
+      res.json({ msg: '查询openid成功', code: 2000, data: data.openid })
+    }
+    else {
+      res.json({ msg: '查询查询openid失败', code: 2001 })
+    }
+  } catch (error) {
+    // 处理请求过程中的异常  
+    console.error(error);
+  }
+})
+
+
+/**
+ * @swagger
+ * /my:
+ *   post:
+ *     tags:
+ *       - 用户端判断微信登录账号是否存在
+ *     summary: 用户端判断微信登录账号是否存在
+ *     description: 获取信息并返回给前端
+ *     responses:
+ *       200:
+ *         description: 成功返回
+ */
+router.post('/queryIsExit', async (req, res) => {
+  let { openId } = req.body
+  try {
+    const db = await pool.getConnection()
+    const checkUser = `SELECT * FROM user WHERE user_id="${openId}"`
+    let [results1, _1] = await db.query(checkUser)
+    if (results1.length > 0) {
+      res.json({ msg: '查询微信openid是否存在成功', code: 2000, data: results1[0] })
+    }
+    else {
+      res.json({ msg: '查询微信openid是否存在失败', code: 2001 })
+    }
+  } catch (error) {
+    // 处理请求过程中的异常  
+    console.error(error);
+  }
+})
+
+
+/**
+ * @swagger
+ * /my:
+ *   post:
+ *     tags:
  *       - 用户端登录
  *     summary: 用户端用户登录
  *     description: 将用户输入的用户名和密码信息到数据库中进行比对，并返回比对成功的用户信息
