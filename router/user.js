@@ -2,6 +2,7 @@ const pool = require('../db');
 const express = require('express')
 const router = express.Router()
 const fs = require('fs').promises
+const crypto = require('crypto');
 const path = require('path')
 const uuid = require('uuid');
 const multer = require('multer');
@@ -143,14 +144,16 @@ router.post('/getById', async (req, res) => {
 router.post('/update', uploadAvatar.single('avatar'), async (req, res) => {
     const { username, password, userId } = req.body;
     const avatarFile = req.file;
-    const newPath = `http://localhost:3000/avatars/${avatarFile.originalname}`
+    const ext = avatarFile.originalname.split('.')[1]
     const checkUserQuery = `SELECT * FROM user WHERE user_id = ?`;
     const updateUserQuery = `UPDATE user SET username = ?, password = ?, avatar = ? WHERE user_id = ?`;
     try {
         const db = await pool.getConnection()
-        const [existingUsers] = await db.query(checkUserQuery, [userId]);
+        // const [existingUsers] = await db.query(checkUserQuery, [userId]);
         const data = await fs.readFile(avatarFile.path);
-        await fs.writeFile(`uploads/avatars/${avatarFile.originalname}`, data);
+        const md5Hash = crypto.createHash('md5').update(data).digest('hex');
+        const newPath = `${process.env.BASE_URL}/avatars/${md5Hash}.${ext}`
+        await fs.writeFile(`uploads/avatars/${md5Hash}.${ext}`, data);
         await fs.unlink(avatarFile.path);
         await db.query(updateUserQuery, [username, password, newPath, userId])
         const [newUser] = await db.query(checkUserQuery, [userId])

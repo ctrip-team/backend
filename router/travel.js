@@ -2,12 +2,14 @@ const pool = require('../db');
 const express = require('express')
 const router = express.Router()
 const fs = require('fs').promises
+const crypto = require('crypto');
 const path = require('path')
 const multer = require('multer');
 const uploadImage = multer({ dest: path.join(__dirname, '../uploads/imgs') })
 const uploadVideo = multer({ dest: path.join(__dirname, '../uploads/videos') })
 const uploadPoster = multer({ dest: path.join(__dirname, '../uploads/posters') })
 const uuid = require('uuid');
+require('dotenv').config()
 
 /**
  * @swagger
@@ -92,13 +94,13 @@ router.post('/uploadImages/:travel_id', uploadImage.single('image'), async (req,
     const file = req.file;
     const travel_id = req.params.travel_id;
     const filePath = file.path;
-    const imageUrl = `http://localhost:3000/imgs/${file.originalname}`;
-
+    const ext = file.originalname.split('.')[1]
     try {
         const data = await fs.readFile(filePath);
-        const newFilePath = `uploads/imgs/${file.originalname}`;
+        const md5Hash = crypto.createHash('md5').update(data).digest('hex');
+        const newFilePath = `uploads/imgs/${md5Hash}.${ext}`;
+        const imageUrl = `${process.env.BASE_URL}/imgs/${md5Hash}.${ext}`;
         await fs.writeFile(newFilePath, data);
-
         await fs.unlink(filePath);
 
         const insertImageQuery = `INSERT INTO image (travel_id, image_url) VALUES ('${travel_id}', '${imageUrl}')`;
@@ -117,7 +119,7 @@ router.post('/uploadVideo/:travel_id', uploadVideo.single('video'), async (req, 
     const file = req.file;
     const travel_id = req.params.travel_id;
     const filePath = file.path;
-    const videoUrl = `http://localhost:3000/videos/${file.originalname}`;
+    const videoUrl = `${process.env.BASE_URL}/videos/${file.originalname}`;
     try {
         const data = await fs.readFile(filePath);
         const newFilePath = `uploads/videos/${file.originalname}`;
@@ -138,10 +140,12 @@ router.post('/uploadPoster/:travel_id', uploadPoster.single('poster'), async (re
     const file = req.file;
     const travel_id = req.params.travel_id;
     const filePath = file.path;
-    const posterUrl = `http://localhost:3000/posters/${file.originalname}`;
+    const ext = file.originalname.split('.')[1]
     try {
         const data = await fs.readFile(filePath);
-        const newFilePath = `uploads/posters/${file.originalname}`;
+        const md5Hash = crypto.createHash('md5').update(data).digest('hex');
+        const newFilePath = `uploads/posters/${md5Hash}.${ext}`;
+        const posterUrl = `${process.env.BASE_URL}/posters/${md5Hash}.${ext}`;
         await fs.writeFile(newFilePath, data);
         await fs.unlink(filePath);
         const insertVideoQuery = `UPDATE travel SET poster = ? WHERE travel_id = ?`
@@ -155,10 +159,8 @@ router.post('/uploadPoster/:travel_id', uploadPoster.single('poster'), async (re
     }
 })
 
-
 router.post('/uploadText', async (req, res) => {
     const { title, content, userId } = req.body;
-
     const contentWithBr = content.replace(/\n/g, '<br>');
     const travel_id = uuid.v4();
 
@@ -173,9 +175,21 @@ router.post('/uploadText', async (req, res) => {
     }
 })
 
+router.post('/updateText', async (req, res) => {
+    const { title, content, travel_id } = req.body;
+    try {
+        const db = await pool.getConnection();
+        const updateQuery = `UPDATE travel SET title = ?, content = ? WHERE travel_id = ?`;
+        await db.query(updateQuery, [title, content, travel_id]);
+        db.release();
+        res.json({ msg: '文本更新成功' });
+    } catch (error) {
+        console.error(error);
+    }
+})
+
 router.post('/getById', async (req, res) => {
     const { travel_id } = req.body;
-
     const sql = `SELECT * FROM travel,user WHERE travel.travel_id=? AND travel.user_id=user.user_id  `
     const sqlImage = `SELECT image_url FROM image WHERE travel_id=?`
     try {

@@ -6,7 +6,6 @@ const http = require("http");
 const https = require("https");
 const fs = require("fs");
 const path = require("path");
-const { PORT } = require('./config')
 const userRouter = require('./router/user.js')
 const travelRouter = require('./router/travel.js')
 const indexRouter = require('./router/index.js')
