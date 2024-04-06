@@ -17,10 +17,10 @@ const axios = require('axios')
  */
 router.get('/mytravels', async (req, res) => {
   const { user_id } = req.query
-  const selectMyTravals = `SELECT * FROM travel t JOIN user u ON t.user_id = u.user_id LEFT JOIN image i ON t.travel_id = i.travel_id WHERE t.status <> 4 AND t.user_id = '${user_id}' GROUP BY t.travel_id ORDER BY CASE WHEN t.status = '1' THEN '1' WHEN t.status = '0' THEN '0' ELSE '2' END, t.created_at DESC;`
+  const selectMyTravals = `SELECT t.travel_id,t.user_id,t.title,t.content,t.views,t.status,t.created_at,t.reason,t.video_url,u.username,u.avatar,MIN(i.image_url) AS image_url FROM travel t JOIN user u ON t.user_id = u.user_id LEFT JOIN image i ON t.travel_id = i.travel_id WHERE t.status != 4 AND u.user_id = ?  GROUP BY t.travel_id ORDER BY t.status ASC;`
   try {
     const db = await pool.getConnection()
-    const [results, _] = await db.query(selectMyTravals)
+    const [results, _] = await db.query(selectMyTravals, [user_id])
     if (results.length > 0) {
       res.json({ msg: '查询成功', code: 2000, data: results })
     } else {
@@ -46,10 +46,10 @@ router.get('/mytravels', async (req, res) => {
  */
 router.post('/deltravel', async (req, res) => {
   const { travel_id } = req.body
-  const deleteTraval = `UPDATE travel SET status = '4' WHERE travel_id="${travel_id}"`
+  const deleteTraval = `UPDATE travel SET status = '4' WHERE travel_id = ?`
   try {
     const db = await pool.getConnection()
-    const [results, _] = await db.query(deleteTraval)
+    const [results, _] = await db.query(deleteTraval, [travel_id])
     if (results.affectedRows > 0) {
       res.json({ msg: '删除成功', code: 2000 })
     } else {
@@ -85,15 +85,15 @@ router.post('/register', async (req, res) => {
     if (data.openid) {
       const openid = data.openid;
       const db = await pool.getConnection()
-      const checkUser = `SELECT * FROM user WHERE username="${username}"`
-      const [results1, _1] = await db.query(checkUser)
+      const checkUser = `SELECT * FROM user WHERE username = ?`
+      const [results1, _1] = await db.query(checkUser, [username])
       if (results1.length > 0) {
         res.json({ msg: '用户名重复', code: 2002 })
         db.release()
       }
       else {
-        const registerSQL = `INSERT INTO user VALUE("${openid}", "${username}","${password}",'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png');`
-        const [results2, _2] = await db.query(registerSQL)
+        const registerSQL = `INSERT INTO user VALUE(?, ?, ?, 'https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png');`
+        const [results2, _2] = await db.query(registerSQL, [openid, username, password])
         if (results2.affectedRows > 0) {
           res.json({ msg: '注册成功', code: 2000 })
         } else {
@@ -128,8 +128,8 @@ router.post('/registerByWeChat', async (req, res) => {
   let { username, password, avatar, openId } = req.body
   try {
     const db = await pool.getConnection()
-    const checkUser = `SELECT * FROM user WHERE username="${username}"`
-    let [results1, _1] = await db.query(checkUser)
+    const checkUser = `SELECT * FROM user WHERE username = ?`
+    let [results1, _1] = await db.query(checkUser, [username])
     //为保证用户名不重复，此处将对重复用户名做增加随机尾号处理
     if (results1.length > 0) {
       while (true) {
@@ -142,8 +142,8 @@ router.post('/registerByWeChat', async (req, res) => {
       }
     }
     else {
-      const registerSQL = `INSERT INTO user VALUE("${openId}", "${username}","${password}","${avatar}")`
-      const [results2, _2] = await db.query(registerSQL)
+      const registerSQL = `INSERT INTO user VALUE(?, ?, ?, ?)`
+      const [results2, _2] = await db.query(registerSQL, [openId, username, password, avatar])
       if (results2.affectedRows > 0) {
         res.json({ msg: '通过微信注册成功', code: 2000 })
       } else {
@@ -207,8 +207,8 @@ router.post('/queryIsExit', async (req, res) => {
   let { openId } = req.body
   try {
     const db = await pool.getConnection()
-    const checkUser = `SELECT * FROM user WHERE user_id="${openId}"`
-    let [results1, _1] = await db.query(checkUser)
+    const checkUser = `SELECT * FROM user WHERE user_id = ?"`
+    let [results1, _1] = await db.query(checkUser, [openId])
     if (results1.length > 0) {
       res.json({ msg: '查询微信openid是否存在成功', code: 2000, data: results1[0] })
     }
@@ -236,10 +236,10 @@ router.post('/queryIsExit', async (req, res) => {
  */
 router.post('/login', async (req, res) => {
   const { username, password } = req.body
-  const matchUser = `SELECT * FROM user WHERE username="${username}" AND password="${password}"`
+  const matchUser = `SELECT * FROM user WHERE username = ? AND password = ?`
   try {
     const db = await pool.getConnection()
-    const [results, _] = await db.query(matchUser)
+    const [results, _] = await db.query(matchUser, [username, password])
     if (results.length > 0) {
       res.json({ msg: '登录成功', code: 2000, data: results });
     } else {
@@ -267,12 +267,12 @@ router.post('/login', async (req, res) => {
  */
 router.get('/mydata', async (req, res) => {
   const { id } = req.query
-  const totalView = `SELECT SUM(views) FROM travel WHERE user_id="${id}" AND status <> '4'`
-  const totalTravel = `SELECT COUNT(*) FROM travel WHERE user_id="${id}" AND status <> '4'`
+  const totalView = `SELECT SUM(views) FROM travel WHERE user_id = ? AND status != 4`
+  const totalTravel = `SELECT COUNT(*) FROM travel WHERE user_id = ? AND status != 4`
   try {
     const db = await pool.getConnection()
-    const [results1, _1] = await db.query(totalView)
-    const [results2, _2] = await db.query(totalTravel)
+    const [results1, _1] = await db.query(totalView, [id])
+    const [results2, _2] = await db.query(totalTravel, [id])
     if (results1.length > 0 && results2.length > 0) {
       if (results1[0]['SUM(views)'] == null) {
         results1[0]['SUM(views)'] = 0
@@ -303,16 +303,16 @@ router.get('/mydata', async (req, res) => {
  */
 router.get('/infodata', async (req, res) => {
   const { id } = req.query
-  const getTravelList = `SELECT * FROM travel t JOIN user u ON t.user_id = u.user_id LEFT JOIN image i ON t.travel_id = i.travel_id WHERE t.status = '2' AND t.user_id = '${id}' GROUP BY t.travel_id ORDER BY t.created_at DESC;`
-  const getInfoDataOfTravels = `SELECT COUNT(*) FROM travel WHERE user_id="${id}" AND status <> '4'`
-  const getInfoDataOfViews = `SELECT SUM(views) FROM travel WHERE user_id="${id}" AND status <> '4'`
-  const getUserInfo = `SELECT * FROM user WHERE user_id="${id}"`
+  const getTravelList = `SELECT * FROM travel t JOIN user u ON t.user_id = u.user_id LEFT JOIN image i ON t.travel_id = i.travel_id WHERE t.status = '2' AND t.user_id = ? GROUP BY t.travel_id ORDER BY t.created_at DESC;`
+  const getInfoDataOfTravels = `SELECT COUNT(*) FROM travel WHERE user_id = ? AND status != '4'`
+  const getInfoDataOfViews = `SELECT SUM(views) FROM travel WHERE user_id = ? AND status != '4'`
+  const getUserInfo = `SELECT * FROM user WHERE user_id = ?`
   try {
     const db = await pool.getConnection()
-    const [results1, _1] = await db.query(getInfoDataOfViews)
-    const [results2, _2] = await db.query(getInfoDataOfTravels)
-    const [results3, _3] = await db.query(getTravelList)
-    const [results4, _4] = await db.query(getUserInfo)
+    const [results1, _1] = await db.query(getInfoDataOfViews, [id])
+    const [results2, _2] = await db.query(getInfoDataOfTravels, [id])
+    const [results3, _3] = await db.query(getTravelList, [id])
+    const [results4, _4] = await db.query(getUserInfo, [id])
     if (results1.length > 0 && results2.length > 0) {
       if (results1[0]['SUM(views)'] == null) {
         results1[0]['SUM(views)'] = 0
