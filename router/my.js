@@ -17,10 +17,10 @@ const axios = require('axios')
  */
 router.get('/mytravels', async (req, res) => {
   const { user_id } = req.query
-  const selectMyTravals = `SELECT t.travel_id, t.title, t.content, t.views, t.status, CASE WHEN t.video_url IS NOT NULL THEN t.poster ELSE (SELECT i.image_url FROM image i WHERE i.travel_id = t.travel_id ORDER BY i.image_id ASC LIMIT 1) END AS poster FROM travel t JOIN user u ON t.user_id = u.user_id LEFT JOIN image img ON t.travel_id = img.travel_id WHERE u.user_id ='${user_id}' AND t.status != 4 ORDER BY t.status ASC;`
+  const selectMyTravals = `SELECT t.travel_id,t.user_id,t.title,t.content,t.views,t.status,t.created_at,t.reason,t.video_url,u.username,u.avatar,MIN(i.image_url) AS image_url FROM travel t JOIN user u ON t.user_id = u.user_id LEFT JOIN image i ON t.travel_id = i.travel_id WHERE t.status != 4 AND u.user_id = ?  GROUP BY t.travel_id ORDER BY t.status ASC;`
   try {
     const db = await pool.getConnection()
-    const [results, _] = await db.query(selectMyTravals)
+    const [results, _] = await db.query(selectMyTravals, [user_id])
     if (results.length > 0) {
       res.json({ msg: '查询成功', code: 2000, data: results })
     } else {
@@ -267,8 +267,8 @@ router.post('/login', async (req, res) => {
  */
 router.get('/mydata', async (req, res) => {
   const { id } = req.query
-  const totalView = `SELECT SUM(views) FROM travel WHERE user_id = ? AND status != '4'`
-  const totalTravel = `SELECT COUNT(*) FROM travel WHERE user_id = ? AND status != '4'`
+  const totalView = `SELECT SUM(views) FROM travel WHERE user_id = ? AND status != 4`
+  const totalTravel = `SELECT COUNT(*) FROM travel WHERE user_id = ? AND status != 4`
   try {
     const db = await pool.getConnection()
     const [results1, _1] = await db.query(totalView, [id])
