@@ -93,6 +93,7 @@ router.post('/getVideos', async (req, res) => {
 router.post('/uploadImages/:travel_id', uploadImage.single('image'), async (req, res) => {
     const file = req.file;
     const travel_id = req.params.travel_id;
+    const { order } = req.body
     const filePath = file.path;
     const ext = file.originalname.split('.')[1]
     try {
@@ -103,15 +104,28 @@ router.post('/uploadImages/:travel_id', uploadImage.single('image'), async (req,
         await fs.writeFile(newFilePath, data);
         await fs.unlink(filePath);
 
-        const insertImageQuery = `INSERT INTO image (travel_id, image_url) VALUES ('${travel_id}', '${imageUrl}')`;
+        const insertImageQuery = `INSERT INTO image (travel_id, image_url, display_order) VALUES (?, ?, ?)`;
         const db = await pool.getConnection();
-        await db.query(insertImageQuery);
+        await db.query(insertImageQuery, [travel_id, imageUrl, parseInt(order)]);
         db.release();
 
         res.json({ msg: '图片上传成功' });
     } catch (error) {
         console.error(error);
         res.status(500).send('存储图片失败');
+    }
+})
+
+router.post('/updateOrder', async (req, res) => {
+    const { travel_id, url, order } = req.body;
+    try {
+        const db = await pool.getConnection();
+        const updateQuery = `INSERT INTO image (travel_id, image_url, display_order) VALUES (?, ?, ?)`;
+        await db.query(updateQuery, [travel_id, url, parseInt(order)]);
+        db.release();
+        res.json({ msg: '更新成功' });
+    } catch (error) {
+        console.error(error);
     }
 })
 
@@ -188,6 +202,50 @@ router.post('/updateText', async (req, res) => {
     }
 })
 
+router.post('/updateVideo/:travel_id', uploadVideo.single('video'), async (req, res) => {
+    const file = req.file;
+    const travel_id = req.params.travel_id;
+    const filePath = file.path;
+    const videoUrl = `${process.env.BASE_URL}/videos/${file.originalname}`;
+    try {
+        const data = await fs.readFile(filePath);
+        const newFilePath = `uploads/videos/${file.originalname}`;
+        await fs.writeFile(newFilePath, data);
+        await fs.unlink(filePath);
+        const insertVideoQuery = `UPDATE travel SET video_url = ? WHERE travel_id = ?`
+        const db = await pool.getConnection();
+        await db.query(insertVideoQuery, [videoUrl, travel_id]);
+        db.release();
+        res.json({ msg: '视频上传成功' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('存储视频失败');
+    }
+})
+
+router.post('/updatePoster/:travel_id', uploadPoster.single('poster'), async (req, res) => {
+    const file = req.file;
+    const travel_id = req.params.travel_id;
+    const filePath = file.path;
+    const ext = file.originalname.split('.')[1]
+    try {
+        const data = await fs.readFile(filePath);
+        const md5Hash = crypto.createHash('md5').update(data).digest('hex');
+        const newFilePath = `uploads/posters/${md5Hash}.${ext}`;
+        const posterUrl = `${process.env.BASE_URL}/posters/${md5Hash}.${ext}`;
+        await fs.writeFile(newFilePath, data);
+        await fs.unlink(filePath);
+        const insertVideoQuery = `UPDATE travel SET poster = ? WHERE travel_id = ?`
+        const db = await pool.getConnection();
+        await db.query(insertVideoQuery, [posterUrl, travel_id]);
+        db.release();
+        res.json({ msg: 'poster上传成功' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send('存储poster失败');
+    }
+})
+
 router.post('/getById', async (req, res) => {
     const { travel_id } = req.body;
     const sql = `SELECT * FROM travel,user WHERE travel.travel_id=? AND travel.user_id=user.user_id  `
@@ -254,6 +312,19 @@ router.post('/recover', async (req, res) => {
         await db.query(updateQuery, [travel_id])
         db.release()
         res.json({ msg: '数据已恢复' });
+    } catch (error) {
+        console.error(error);
+    }
+})
+
+router.post('/deleteImages', async (req, res) => {
+    const { travel_id } = req.body;
+    try {
+        const db = await pool.getConnection();
+        const deleteQuery = `DELETE FROM image WHERE travel_id = ?`;
+        await db.query(deleteQuery, [travel_id]);
+        db.release();
+        res.json({ msg: '已删除与该 travel_id 相关的所有内容' });
     } catch (error) {
         console.error(error);
     }
