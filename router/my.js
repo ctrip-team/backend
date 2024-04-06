@@ -17,7 +17,7 @@ const axios = require('axios')
  */
 router.get('/mytravels', async (req, res) => {
   const { user_id } = req.query
-  const selectMyTravals = `SELECT t.travel_id,t.user_id,t.title,t.content,t.views,t.status,t.created_at,t.reason,t.video_url,u.username,u.avatar,MIN(i.image_url) AS image_url FROM travel t JOIN user u ON t.user_id = u.user_id LEFT JOIN image i ON t.travel_id = i.travel_id WHERE t.status != 4 AND u.user_id = ?  GROUP BY t.travel_id ORDER BY t.status ASC;`
+  const selectMyTravals = `SELECT t.video_url,t.travel_id,t.user_id,t.title,t.content,t.views,t.status,COALESCE(t.video_url, i.image_url) AS image_url,COALESCE(t.poster, i.image_url) AS poster_url FROM travel t JOIN user u ON t.user_id = u.user_id LEFT JOIN image i ON t.travel_id = i.travel_id AND i.display_order = 0 WHERE t.status != 4 AND u.user_id = ? ORDER BY t.status ASC;`
   try {
     const db = await pool.getConnection()
     const [results, _] = await db.query(selectMyTravals, [user_id])
@@ -267,8 +267,8 @@ router.post('/login', async (req, res) => {
  */
 router.get('/mydata', async (req, res) => {
   const { id } = req.query
-  const totalView = `SELECT SUM(views) FROM travel WHERE user_id = ? AND status != 4`
-  const totalTravel = `SELECT COUNT(*) FROM travel WHERE user_id = ? AND status != 4`
+  const totalView = `SELECT SUM(views) FROM travel WHERE user_id = ? AND status = 2`
+  const totalTravel = `SELECT COUNT(*) FROM travel WHERE user_id = ? AND status = 2`
   try {
     const db = await pool.getConnection()
     const [results1, _1] = await db.query(totalView, [id])
@@ -303,9 +303,9 @@ router.get('/mydata', async (req, res) => {
  */
 router.get('/infodata', async (req, res) => {
   const { id } = req.query
-  const getTravelList = `SELECT * FROM travel t JOIN user u ON t.user_id = u.user_id LEFT JOIN image i ON t.travel_id = i.travel_id WHERE t.status = '2' AND t.user_id = ? GROUP BY t.travel_id ORDER BY t.created_at DESC;`
-  const getInfoDataOfTravels = `SELECT COUNT(*) FROM travel WHERE user_id = ? AND status != '4'`
-  const getInfoDataOfViews = `SELECT SUM(views) FROM travel WHERE user_id = ? AND status != '4'`
+  const getTravelList = `SELECT t.video_url,t.travel_id,t.user_id,t.title,t.content,t.views,t.status,COALESCE(t.video_url, i.image_url) AS image_url,COALESCE(t.poster, i.image_url) AS poster_url FROM travel t JOIN user u ON t.user_id = u.user_id LEFT JOIN image i ON t.travel_id = i.travel_id AND i.display_order = 0 WHERE t.status = 2 AND u.user_id = ? ORDER BY t.created_at ASC;`
+  const getInfoDataOfTravels = `SELECT COUNT(*) FROM travel WHERE user_id = ? AND status = 2`
+  const getInfoDataOfViews = `SELECT SUM(views) FROM travel WHERE user_id = ? AND status = 2`
   const getUserInfo = `SELECT * FROM user WHERE user_id = ?`
   try {
     const db = await pool.getConnection()

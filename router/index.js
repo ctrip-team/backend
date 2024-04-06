@@ -16,7 +16,7 @@ const router = express.Router()
  *         description: 成功返回一部分游记信息
  */
 router.get('/index', async (req, res) => {
-  const selectPassTravals = `SELECT * FROM travel t JOIN user u ON t.user_id = u.user_id JOIN (SELECT travel_id, MIN(image_id) AS min_image_id FROM image GROUP BY travel_id) AS sub ON t.travel_id = sub.travel_id JOIN image i ON sub.travel_id = i.travel_id AND sub.min_image_id = i.image_id WHERE t.status = '2' GROUP BY t.travel_id ORDER BY t.created_at DESC LIMIT 10;`
+  const selectPassTravals = `SELECT u.username,u.avatar,t.travel_id,t.user_id,t.title,t.content,t.views,t.status,t.created_at,t.reason,t.video_url,COALESCE(t.video_url, i.image_url) AS image_url,COALESCE(t.poster, i.image_url) AS poster_url FROM travel t JOIN user u ON t.user_id = u.user_id LEFT JOIN image i ON t.travel_id = i.travel_id AND i.display_order = 0 WHERE t.status = 2 ORDER BY RAND() LIMIT 10;`
   try {
     const db = await pool.getConnection()
     const [results, _] = await db.query(selectPassTravals)
@@ -47,7 +47,7 @@ router.get('/index', async (req, res) => {
  */
 router.get('/searchTitle', async (req, res) => {
   const { searchKey } = req.query
-  const selectWithTitle = `SELECT * FROM travel t JOIN user u ON t.user_id = u.user_id JOIN (SELECT travel_id,MIN(image_id) AS min_image_id FROM image GROUP BY travel_id) min_image ON t.travel_id = min_image.travel_id JOIN image i ON min_image.min_image_id = i.image_id WHERE t.status = ${'2'} And (u.username LIKE '%${searchKey}%' OR t.title LIKE '%${searchKey}%'); `
+  const selectWithTitle = `SELECT u.username,u.avatar,u.user_id,t.video_url,t.travel_id,t.user_id,t.title,t.content,t.views,t.status,t.created_at,t.reason,COALESCE(t.video_url, i.image_url) AS image_url,COALESCE(t.poster, i.image_url) AS poster_url FROM travel t JOIN user u ON t.user_id = u.user_id LEFT JOIN image i ON t.travel_id = i.travel_id AND i.display_order = 0 WHERE t.status = 2 AND (t.title LIKE '%${searchKey}%' OR u.username LIKE '%${searchKey}%'); `
   try {
     const db = await pool.getConnection()
     const [results, _] = await db.query(selectWithTitle)
