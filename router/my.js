@@ -17,7 +17,7 @@ const axios = require('axios')
  */
 router.get('/mytravels', async (req, res) => {
   const { user_id } = req.query
-  const selectMyTravals = `SELECT t.video_url,t.travel_id,t.user_id,t.title,t.content,t.views,t.status,COALESCE(t.video_url, i.image_url) AS image_url,COALESCE(t.poster, i.image_url) AS poster_url FROM travel t JOIN user u ON t.user_id = u.user_id LEFT JOIN image i ON t.travel_id = i.travel_id AND i.display_order = 0 WHERE t.status != 4 AND u.user_id = ? ORDER BY t.status ASC;`
+  const selectMyTravals = `SELECT t.video_url,t.travel_id,t.user_id,t.title,t.content,t.views,t.status,COALESCE(t.video_url, i.image_url) AS image_url,COALESCE(t.poster, i.image_url) AS poster_url FROM travel t JOIN user u ON t.user_id = u.user_id LEFT JOIN image i ON t.travel_id = i.travel_id AND i.display_order = 0 WHERE t.status != 4 AND u.user_id = ? ORDER BY t.status ASC,t.created_at DESC;`
   try {
     const db = await pool.getConnection()
     const [results, _] = await db.query(selectMyTravals, [user_id])
