@@ -6,16 +6,16 @@ module.exports = {
     // DBPASSWORD: '123456',
 
     // 本地数据库
-    // DBHOST: 'localhost',
-    // DBNAME: 'test',
-    // DBUSER: 'root',
-    // DBPASSWORD: '510524xzw',
-
-    // 本地数据库
     DBHOST: 'localhost',
-    DBNAME: 'travel',
+    DBNAME: 'test',
     DBUSER: 'root',
-    DBPASSWORD: '1234',
+    DBPASSWORD: '510524xzw',
+
+    // // 本地数据库
+    // DBHOST: 'localhost',
+    // DBNAME: 'travel',
+    // DBUSER: 'root',
+    // DBPASSWORD: '1234',
 
     PORT: 3000,
     secret: 'weareno1' //密钥    
