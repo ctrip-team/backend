@@ -267,17 +267,14 @@ router.post('/login', async (req, res) => {
  */
 router.get('/mydata', async (req, res) => {
   const { id } = req.query
-  const totalView = `SELECT SUM(views) FROM travel WHERE user_id = ? AND status = 2`
-  const totalTravel = `SELECT COUNT(*) FROM travel WHERE user_id = ? AND status = 2`
+  const totalView = `SELECT COALESCE(SUM(views),0) AS totalView FROM travel WHERE user_id = ? AND status = 2`
+  const totalTravel = `SELECT COALESCE(COUNT(*),0) AS totalTravel FROM travel WHERE user_id = ? AND status = 2`
   try {
     const db = await pool.getConnection()
     const [results1, _1] = await db.query(totalView, [id])
     const [results2, _2] = await db.query(totalTravel, [id])
     if (results1.length > 0 && results2.length > 0) {
-      if (results1[0]['SUM(views)'] == null) {
-        results1[0]['SUM(views)'] = 0
-      }
-      const re = { totalView: results1[0]['SUM(views)'], totalTravel: results2[0]['COUNT(*)'] }
+      const re = { totalView: results1[0]['totalView'], totalTravel: results2[0]['totalTravel'] }
       res.json({ msg: '查询成功', code: 2000, data: re });
     } else {
       res.json({ msg: '查询失败', code: 2001 });
@@ -304,8 +301,8 @@ router.get('/mydata', async (req, res) => {
 router.get('/infodata', async (req, res) => {
   const { id } = req.query
   const getTravelList = `SELECT t.video_url,t.travel_id,t.user_id,t.title,t.content,t.views,t.status,COALESCE(t.video_url, i.image_url) AS image_url,COALESCE(t.poster, i.image_url) AS poster_url FROM travel t JOIN user u ON t.user_id = u.user_id LEFT JOIN image i ON t.travel_id = i.travel_id AND i.display_order = 0 WHERE t.status = 2 AND u.user_id = ? ORDER BY t.created_at ASC;`
-  const getInfoDataOfTravels = `SELECT COUNT(*) FROM travel WHERE user_id = ? AND status = 2`
-  const getInfoDataOfViews = `SELECT SUM(views) FROM travel WHERE user_id = ? AND status = 2`
+  const getInfoDataOfTravels = `SELECT COALESCE(COUNT(*),0) AS totalTravel FROM travel WHERE user_id = ? AND status = 2`
+  const getInfoDataOfViews = `SELECT COALESCE(SUM(views),0) AS totalView FROM travel WHERE user_id = ? AND status = 2`
   const getUserInfo = `SELECT * FROM user WHERE user_id = ?`
   try {
     const db = await pool.getConnection()
@@ -314,10 +311,7 @@ router.get('/infodata', async (req, res) => {
     const [results3, _3] = await db.query(getTravelList, [id])
     const [results4, _4] = await db.query(getUserInfo, [id])
     if (results1.length > 0 && results2.length > 0) {
-      if (results1[0]['SUM(views)'] == null) {
-        results1[0]['SUM(views)'] = 0
-      }
-      const re = { totalView: results1[0]['SUM(views)'], totalTravel: results2[0]['COUNT(*)'], travelList: results3, userInfo: results4[0] }
+      const re = { totalView: results1[0]['totalView'], totalTravel: results2[0]['totalTravel'], travelList: results3, userInfo: results4[0] }
       res.json({ msg: '查询成功', code: 2000, data: re });
     }
     else {
