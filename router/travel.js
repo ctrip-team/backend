@@ -74,14 +74,27 @@ router.get('/getDelete', async (req, res) => {
 
 router.post('/getVideos', async (req, res) => {
     const { travel_id } = req.body;
+    const checkStatusQuery = `SELECT * FROM travel WHERE travel_id = ?`;
     try {
+        const db = await pool.getConnection();
+
+        const [results] = await db.query(checkStatusQuery, [travel_id]);
+        console.log(results);
+        if (results.length > 0) {
+            const status = results[0].status;
+            if (status !== '2') {
+                db.release();
+                res.json({ travels: results });
+                return;
+            }
+        }
         const getTravelQuery = `
             SELECT *, 
             CASE WHEN travel_id = ? THEN 0 ELSE 1 END AS order_flag 
             FROM travel 
             WHERE video_url IS NOT NULL 
+            AND status != 4
             ORDER BY order_flag`;
-        const db = await pool.getConnection();
         const [travels] = await db.query(getTravelQuery, [travel_id]);
         db.release();
         res.json({ travels });
@@ -249,7 +262,7 @@ router.post('/updatePoster/:travel_id', uploadPoster.single('poster'), async (re
 router.post('/getById', async (req, res) => {
     const { travel_id } = req.body;
     const sql = `SELECT * FROM travel,user WHERE travel.travel_id=? AND travel.user_id=user.user_id  `
-    const sqlImage = `SELECT image_url FROM image WHERE travel_id=?`
+    const sqlImage = `SELECT image_url FROM image WHERE travel_id=? ORDER BY display_order ASC`;
     try {
         const db = await pool.getConnection()
         const [results] = await db.query(sql, [travel_id])
