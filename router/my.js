@@ -207,7 +207,7 @@ router.post('/queryIsExit', async (req, res) => {
   let { openId } = req.body
   try {
     const db = await pool.getConnection()
-    const checkUser = `SELECT * FROM user WHERE user_id = ?"`
+    const checkUser = `SELECT * FROM user WHERE user_id = ?`
     let [results1, _1] = await db.query(checkUser, [openId])
     if (results1.length > 0) {
       res.json({ msg: '查询微信openid是否存在成功', code: 2000, data: results1[0] })
