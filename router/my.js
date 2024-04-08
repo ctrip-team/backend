@@ -140,6 +140,7 @@ router.post('/registerByWeChat', async (req, res) => {
           break;
         }
       }
+      db.release()
     }
     else {
       const registerSQL = `INSERT INTO user VALUE(?, ?, ?, ?)`
@@ -215,6 +216,7 @@ router.post('/queryIsExit', async (req, res) => {
     else {
       res.json({ msg: '查询微信openid是否存在失败', code: 2001 })
     }
+    db.release()
   } catch (error) {
     // 处理请求过程中的异常  
     console.error(error);
