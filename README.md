@@ -1,15 +1,27 @@
-# backend
-项目初始化
-├─config——配置文件
-├─db——连接数据库
-├─router——后端的路由
-└─index.js——文件入口
+# 旅游日记平台及审核管理系统后端
 
-# 当前数据库
-## image表：image_id,travel_id,image_url
-## reviewer表：reviewer_id,username,password,role
-## travel表：travel_id,user_id,title_content,status,created_at
-status: {'0':'待审核','1':'未通过','2':'审核通过',4:'逻辑删除'}
-## user表：user_id,username,password
+## 简介
 
-mysql下放了test数据库，可进行测试
+后端实现基于Nodejs，相关技术栈有Nodejs+express+mysql
+
+## 快速开始
+
+`npm install` 安装所有依赖
+
+`npm start` 启动后端
+
+## API在线查看地址
+
+
+
+## 数据库
+
+![img](assets/QMXH31B$K_GF90@IAPOO{BF.png)
+
+| status |   说明   |
+| :----: | :------: |
+|  '0'   |  待审核  |
+|  '1'   |  未通过  |
+|  '2'   | 审核通过 |
+|  '4'   | 逻辑删除 |
+
