@@ -46,15 +46,19 @@ router.get('/index', async (req, res) => {
  *         description: 成功返回一部分游记信息
  */
 router.get('/searchTitle', async (req, res) => {
-  const { searchKey } = req.query
-  const selectWithTitle = `SELECT u.username,u.avatar,u.user_id,t.video_url,t.travel_id,t.user_id,t.title,t.content,t.views,t.status,t.created_at,t.reason,COALESCE(t.video_url, i.image_url) AS image_url,COALESCE(t.poster, i.image_url) AS poster_url FROM travel t JOIN user u ON t.user_id = u.user_id LEFT JOIN image i ON t.travel_id = i.travel_id AND i.display_order = 0 WHERE t.status = 2 AND (t.title LIKE '%${searchKey}%' OR u.username LIKE '%${searchKey}%'); `
+  const { searchKey, dataPage } = req.query
+  const selectWithTitle = `SELECT u.username,u.avatar,u.user_id,t.video_url,t.travel_id,t.user_id,t.title,t.content,t.views,t.status,t.created_at,t.reason,COALESCE(t.video_url, i.image_url) AS image_url,COALESCE(t.poster, i.image_url) AS poster_url FROM travel t JOIN user u ON t.user_id = u.user_id LEFT JOIN image i ON t.travel_id = i.travel_id AND i.display_order = 0 WHERE t.status = 2 AND (t.title LIKE '%${searchKey}%' OR u.username LIKE '%${searchKey}%') LIMIT 10 OFFSET ${dataPage}; `
   try {
     const db = await pool.getConnection()
     const [results, _] = await db.query(selectWithTitle)
     if (results.length > 0) {
       res.json({ msg: '查询成功', code: 2000, data: results });
-    } else {
-      res.json({ msg: '查询失败', code: 2001 });
+    }
+    else if (results.length == 0) {
+      res.json({ msg: '已无后续数据', code: 2001 });
+    }
+    else {
+      res.json({ msg: '查询失败', code: 2002 });
     }
     db.release()
   } catch (error) {
