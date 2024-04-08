@@ -277,9 +277,11 @@ router.post('/getById', async (req, res) => {
 })
 
 router.post('/pass', async (req, res) => {
-    const { travel_id } = req.body;
+    const { travel_id, role_id } = req.body;
     try {
         const db = await pool.getConnection()
+        const updateRoleQuery = `UPDATE role SET review_count = review_count + 1 WHERE role_id = ?`;
+        await db.query(updateRoleQuery, [role_id]);
         const updateQuery = `UPDATE travel SET status = '2' WHERE travel_id = ? `;
         await db.query(updateQuery, [travel_id])
         db.release()
@@ -290,10 +292,12 @@ router.post('/pass', async (req, res) => {
 })
 
 router.post('/reject', async (req, res) => {
-    const { travel_id, reason } = req.body;
+    const { travel_id, reason, role_id } = req.body;
 
     try {
         const db = await pool.getConnection()
+        const updateRoleQuery = `UPDATE role SET review_count = review_count + 1 WHERE role_id = ?`;
+        await db.query(updateRoleQuery, [role_id]);
         const updateQuery = `UPDATE travel SET status = '1', reason = ? WHERE travel_id = ? `;
         await db.query(updateQuery, [reason, travel_id])
         db.release()
@@ -342,5 +346,28 @@ router.post('/deleteImages', async (req, res) => {
         console.error(error);
     }
 })
+
+router.post('/getTravelInfoAPI', async (req, res) => {
+    const { role_id } = req.body;
+    try {
+        const db = await pool.getConnection();
+        const getReviewCountQuery = `SELECT * FROM role WHERE role_id = ?`;
+        const [roleResults] = await db.query(getReviewCountQuery, [role_id]);
+        const review_count = roleResults[0].review_count
+
+        const getStatusCountQuery = `
+            SELECT 
+                SUM(CASE WHEN status = '0' THEN 1 ELSE 0 END) AS status0,
+                SUM(CASE WHEN status = '1' THEN 1 ELSE 0 END) AS status1,
+                SUM(CASE WHEN status = '2' THEN 1 ELSE 0 END) AS status2,
+                SUM(CASE WHEN status = '4' THEN 1 ELSE 0 END) AS status4
+            FROM travel`;
+        const [statusResults] = await db.query(getStatusCountQuery);
+        db.release();
+        res.json({ review_count, status_counts: statusResults[0] });
+    } catch (error) {
+        console.error(error);
+    }
+});
 
 module.exports = router
