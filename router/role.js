@@ -213,7 +213,7 @@ router.post('/update', checkTokenMiddleware, async (req, res) => {
  */
 router.get('/getRoles/:start/:num', checkTokenMiddleware, async (req, res) => {
     const { start, num } = req.params
-    const sql = `SELECT * FROM role LIMIT ${parseInt(start)}, ${parseInt(num)}`;
+    const sql = `SELECT * FROM role WHERE is_admin IN (0, 1) LIMIT ${parseInt(start)}, ${parseInt(num)}`;
     try {
         const db = await pool.getConnection()
         const [results, _] = await db.query(sql)
