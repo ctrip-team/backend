@@ -5,12 +5,12 @@ const router = express.Router()
 
 /**
  * @swagger
- * /index:
+ * /api/index/index:
  *   get:
  *     tags:
- *       - 首页内容
+ *       - 小程序
  *     summary: 获取首页游记信息
- *     description: 从数据库返回一部分游记信息,随机选取10条数据
+ *     description: 从数据库全部的处于已发布状态的游记信息,随机选取10条数据进行返回
  *     responses:
  *       200:
  *         description: 成功返回一部分游记信息
@@ -35,12 +35,26 @@ router.get('/index', async (req, res) => {
 
 /**
  * @swagger
- * /index:
+ *  /api/index/searchTitle:
  *   get:
  *     tags:
- *       - 搜索结果
+ *       - 小程序
  *     summary: 获取搜索结果
- *     description: 从数据库返回一部分结果信息
+ *     description: 从数据库中查找文章、视频名称或用户名称中包含查询字符串的游记信息，并按照分页查询的模式，每次返回十条信息
+ *     parameters:
+ *        required: true
+ *        application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 searchKey:
+ *                   type: string
+ *                   description: 用户输入的搜索词
+ *                   example: 携程上海
+ *                 dataPage:
+ *                   type: number
+ *                   description: 搜索结果的页码
+ *                   example: 1
  *     responses:
  *       200:
  *         description: 成功返回一部分游记信息
@@ -68,15 +82,25 @@ router.get('/searchTitle', async (req, res) => {
 
 /**
  * @swagger
- * /index:
+ * /api/index/searchUser:
  *   get:
  *     tags:
- *       - 搜索用户
+ *       - 小程序
  *     summary: 获取搜索用户的结果
- *     description: 从数据库返回一部分结果信息
+ *     description: 通过搜索词在数据库中查找用户的头像、用户名、游记数和浏览量等主要信息，并从数据库返回全部的结果信息
+ *     parameters:
+ *        required: true
+ *        application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 searchKey:
+ *                   type: string
+ *                   description: 用户输入的搜索词
+ *                   example: zave
  *     responses:
  *       200:
- *         description: 成功返回一部分用户信息
+ *         description: 成功返回用户信息
  */
 router.get('/searchUser', async (req, res) => {
   const { searchKey } = req.query
@@ -98,12 +122,27 @@ router.get('/searchUser', async (req, res) => {
 
 /**
  * @swagger
- * /index:
- *   get:
+ * /api/index/addReadNum:
+ *   post:
  *     tags:
- *       - 增加阅读量
- *     summary: 增加阅读量
- *     description: 在数据库中将指定的条目的阅读数增加1
+ *       - 小程序
+ *     summary: 增加浏览量
+ *     description: 当用户点击某一游记时，将会调用此函数，该游记的浏览量增加1
+ *     requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   description: 游记的travel_id
+ *                   example: 08db68ac-99d2-423f-b17c-e396e8cdb27f
+ *                 readnum:
+ *                   type: number
+ *                   description: 游记的浏览量
+ *                   example: 1001
  *     responses:
  *       200:
  *         description: 成功返回

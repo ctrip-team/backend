@@ -5,12 +5,22 @@ const axios = require('axios')
 
 /**
  * @swagger
- * /my:
+ * /api/my/mytravels:
  *   get:
  *     tags:
- *       - 我的游记内容
+ *       - 小程序
  *     summary: 获取全部我的游记信息
  *     description: 从数据库返回我的全部游记信息
+ *     parameters:
+ *        required: true
+ *        application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user_id:
+ *                   type: string
+ *                   description: 用户的user_id
+ *                   example: 2c816ed4-ce23-42ca-a115-77d3a95021dd
  *     responses:
  *       200:
  *         description: 成功返回游记信息
@@ -34,12 +44,23 @@ router.get('/mytravels', async (req, res) => {
 
 /**
  * @swagger
- * /my:
+ * /apu/my/deltravel:
  *   post:
  *     tags:
- *       - 删除游记
+ *       - 小程序
  *     summary: 删除指定游记
  *     description: 从数据库删除指定的游记信息
+ *     requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 travel_id:
+ *                   type: string
+ *                   description: 游记的travel_id
+ *                   example: 08db68ac-99d2-423f-b17c-e396e8cdb27
  *     responses:
  *       200:
  *         description: 成功删除指定游记信息
@@ -64,12 +85,30 @@ router.post('/deltravel', async (req, res) => {
 
 /**
  * @swagger
- * /my:
+ * /api/my/register:
  *   post:
  *     tags:
- *       - 用户端注册
- *     summary: 用户端用户注册
- *     description: 将用户输入的用户名和密码信息存储到数据库中
+ *       - 小程序
+ *     summary: 用户端用户普通注册
+ *     description: 将用户输入的用户名、密码信息连同从微信获取到的用户唯一微信openid、本小程序默认设置的头像一起，作为用户信息存入数据库中
+ *     requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 username:
+ *                   type: string
+ *                   description: 用户用户名
+ *                   example: zave
+ *                 password:
+ *                   type: string
+ *                   description: 用户密码
+ *                   example: 123
+ *                 code：
+ *                   type: string
+ *                   description: 用于进入微信服务器查询用户唯一openid时使用的临时验证码
  *     responses:
  *       200:
  *         description: 成功注册
@@ -114,12 +153,35 @@ router.post('/register', async (req, res) => {
 
 /**
  * @swagger
- * /my:
+ * /api/my/registerByWeChat:
  *   post:
  *     tags:
- *       - 用户端微信注册
+ *       - 小程序
  *     summary: 用户端用户微信注册
- *     description: 将用户输入的用户名、密码和头像信息存储到数据库中
+ *     description: 通过获取用户微信信息，将获取到的用户微信唯一openid、头像。用户名连同本系统默认设置的密码123456x一起存入数据库中，当用户名出现重复时，将会为其生成随机用户名尾号
+ *     requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 username:
+ *                   type: string
+ *                   description: 用户微信名称
+ *                   example: zave
+ *                 password:
+ *                   type: string
+ *                   description: 系统默认设置的密码
+ *                   example: 123456x
+ *                avatar:
+ *                   type: string
+ *                   description: 用户微信头像url
+ *                   example: https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png
+ *                openId:
+ *                   type: string
+ *                   description: 用户微信openid
+ *                   example: IoFZp0XzRqVi1U
  *     responses:
  *       200:
  *         description: 成功注册
@@ -161,12 +223,22 @@ router.post('/registerByWeChat', async (req, res) => {
 
 /**
  * @swagger
- * /my:
+ * /api/my/getOpenId:
  *   post:
  *     tags:
- *       - 用户端微信ID获取
- *     summary: 用户端用户微信ID获取
- *     description: 获取用户微信openid返回给前端
+ *       - 小程序
+ *     summary: 用户端用户微信openidID获取
+ *     description: 通过此接口获取用户微信openid，便于后续操作
+ *     requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 code:
+ *                   type: string
+ *                   description: 用于进入微信服务器查询用户唯一openid时使用的临时验证码
  *     responses:
  *       200:
  *         description: 成功返回
@@ -194,12 +266,23 @@ router.post('/getOpenId', async (req, res) => {
 
 /**
  * @swagger
- * /my:
+ * /api/my/queryIsExit:
  *   post:
  *     tags:
- *       - 用户端判断微信登录账号是否存在
- *     summary: 用户端判断微信登录账号是否存在
- *     description: 获取信息并返回给前端
+ *       - 小程序
+ *     summary: 判断微信登录账号是否存在
+ *     description: 判断这个微信用户是否使用微信快捷注册登录注册与登录过本小程序
+ *     requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 openId:
+ *                   type: string
+ *                   description: 用户微信openid
+ *                   example: IoFZp0XzRqVi1U
  *     responses:
  *       200:
  *         description: 成功返回
@@ -226,12 +309,27 @@ router.post('/queryIsExit', async (req, res) => {
 
 /**
  * @swagger
- * /my:
+ * /api/my/login:
  *   post:
  *     tags:
- *       - 用户端登录
- *     summary: 用户端用户登录
+ *       - 小程序
+ *     summary: 用户登录
  *     description: 将用户输入的用户名和密码信息到数据库中进行比对，并返回比对成功的用户信息
+ *     requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 username:
+ *                   type: string
+ *                   description: 用户名
+ *                   example: zave
+ *                 password:
+ *                   type: string
+ *                   description: 密码
+ *                   example: 123456x
  *     responses:
  *       200:
  *         description: 成功登录
@@ -257,12 +355,22 @@ router.post('/login', async (req, res) => {
 
 /**
  * @swagger
- * /my:
+ * /api/my/mydata:
  *   get:
  *     tags:
- *       - 获取用户数据
- *     summary: 获取用户端用户的总浏览量和游记数数据
- *     description: 获取用户端用户的总浏览量和游记数数据
+ *       - 小程序
+ *     summary: 获取用户端用户的已发布状态的游记的总浏览量和已发布状态的游记数数据
+ *     description: 获取用户端用户的已发布状态的游记的总浏览量和已发布状态的游记数数据
+ *     parameters:
+ *        required: true
+ *        application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   description: 用户的user_id
+ *                   example: 2c816ed4-ce23-42ca-a115-77d3a95021dd
  *     responses:
  *       200:
  *         description: 成功返回数据
@@ -290,12 +398,22 @@ router.get('/mydata', async (req, res) => {
 
 /**
  * @swagger
- * /my:
+ * /api/my/infodata:
  *   get:
  *     tags:
- *       - 获取指定用户相关数据
- *     summary: 获取用户端指定用户信息、游记等数据
- *     description: 获取用户端指定用户信息、游记等数据
+ *       - 小程序
+ *     summary: 获取个人主页的用户信息、游记等数据
+ *     description: 获取个人主页的用户信息、游记等数据
+ *     parameters:
+ *        required: true
+ *        application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 id:
+ *                   type: string
+ *                   description: 用户的user_id
+ *                   example: 2c816ed4-ce23-42ca-a115-77d3a95021dd
  *     responses:
  *       200:
  *         description: 成功返回数据
