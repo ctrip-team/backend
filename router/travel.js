@@ -5,6 +5,7 @@ const fs = require('fs').promises
 const crypto = require('crypto');
 const path = require('path')
 const multer = require('multer');
+const sanitizeHtml = require('sanitize-html');
 const uploadImage = multer({ dest: path.join(__dirname, '../uploads/imgs') })
 const uploadVideo = multer({ dest: path.join(__dirname, '../uploads/videos') })
 const uploadPoster = multer({ dest: path.join(__dirname, '../uploads/posters') })
@@ -339,13 +340,19 @@ router.post('/uploadPoster/:travel_id', uploadPoster.single('poster'), async (re
  */
 router.post('/uploadText', async (req, res) => {
     const { title, content, userId } = req.body;
-    const contentWithBr = content.replace(/\n/g, '<br>');
+    const contentWithoutScript = sanitizeHtml(content, {
+        allowedTags: ['b', 'i', 'em', 'strong'],
+        disallowedTagsMode: 'discard',
+        textFilter: (text) => {
+            return text.replace(/\n/g, '<br>');
+        },
+    });
     const travel_id = uuid.v4();
 
     const insertTravelQuery = `INSERT INTO travel (travel_id, user_id, title, content, status, created_at) VALUES (?, ?, ?, ?, 0, CURRENT_TIMESTAMP)`;
     try {
         const db = await pool.getConnection()
-        await db.query(insertTravelQuery, [travel_id, userId, title, contentWithBr])
+        await db.query(insertTravelQuery, [travel_id, userId, title, contentWithoutScript])
         db.release()
         res.json({ msg: '标题和内容上传成功', travel_id });
     } catch (error) {
@@ -578,7 +585,7 @@ router.post('/getById', async (req, res) => {
  *         description: 成功返回游记
  */
 router.get('/getDelete', async (req, res) => {
-    const getDeleteTravelQuery = `SELECT * FROM travel WHERE status='${4}'`
+    const getDeleteTravelQuery = `SELECT * FROM travel WHERE status='4'`
     try {
         const db = await pool.getConnection()
         const [travelList] = await db.query(getDeleteTravelQuery)
