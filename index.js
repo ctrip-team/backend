@@ -17,8 +17,8 @@ const rateLimit = require("express-rate-limit");
 var bodyParser = require('body-parser')
 
 const limiter = rateLimit({
-    windowMs: 1 * 60 * 1000, // 1 分钟  
-    max: 20, // 最大请求数  
+    windowMs: 1 * 30 * 1000, // 1 分钟  
+    max: 50, // 最大请求数  
     message: {
         statusCode: 429,
         error: 'Too Many Requests',
