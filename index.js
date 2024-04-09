@@ -16,6 +16,11 @@ const swaggerSpec = require('./config/swagger.js')
 const rateLimit = require("express-rate-limit");
 var bodyParser = require('body-parser')
 
+app.use((req, res, next) => {
+    res.setHeader('Content-Security-Policy', "default-src 'self'");
+    next();
+});
+
 const limiter = rateLimit({
     windowMs: 1 * 30 * 1000, // 1 分钟  
     max: 50, // 最大请求数  
