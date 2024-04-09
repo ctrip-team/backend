@@ -11,67 +11,35 @@ const uploadPoster = multer({ dest: path.join(__dirname, '../uploads/posters') }
 const uuid = require('uuid');
 require('dotenv').config()
 
+/*****************************
+ * 
+ * 小程序游记API
+ * 
+ ****************************/
+
 /**
  * @swagger
- * /api/travel/get:
- *   get:
+ * /api/travel/getVideos:
+ *   post:
  *     tags:
- *       - 游记相关（后台）
- *     summary: 获取指定数量的游记
- *     description: 从数据库返回指定数量的游记
- *     parameters:
- *         - in: path
- *           name: num
- *           required: true
- *           description: 指定数量
- *           schema:
- *             type: integer
- *             minimum: 1
- *             maximum: 10
+ *       - 游记（小程序）
+ *     summary: 返回有视频的游记
+ *     description: 根据当前travel状态返回有视频的游记
+ *     requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 travel_id:
+ *                   type: string
+ *                   description: 游记id
+ *                   example: 123
  *     responses:
  *       200:
  *         description: 成功返回游记
  */
-router.get('/get', async (req, res) => {
-    try {
-        const getTravelQuery = `SELECT * FROM travel WHERE status <> 4 ORDER BY created_at DESC`;
-        const db = await pool.getConnection()
-        const [travelList, _] = await db.query(getTravelQuery);
-
-        const promises = travelList.map(async (travel) => {
-            const getImagesQuery = `SELECT image_url FROM image WHERE travel_id = ?`;
-            const [imageResults] = await db.query(getImagesQuery, [travel.travel_id]);
-            const images = imageResults.map(image => image.image_url);
-            return { ...travel, imgs: images, key: travel.travel_id };
-        });
-
-        const results = await Promise.all(promises);
-        db.release()
-        res.json({ travelList: results });
-    } catch (error) {
-        console.error(error);
-    }
-});
-
-router.get('/getDelete', async (req, res) => {
-    const getDeleteTravelQuery = `SELECT * FROM travel WHERE status='${4}'`
-    try {
-        const db = await pool.getConnection()
-        const [travelList] = await db.query(getDeleteTravelQuery)
-        const promises = travelList.map(async (travel) => {
-            const getImagesQuery = `SELECT image_url FROM image WHERE travel_id = ?`;
-            const [imageResults] = await db.query(getImagesQuery, [travel.travel_id]);
-            const images = imageResults.map(image => image.image_url);
-            return { ...travel, imgs: images, key: travel.travel_id };
-        });
-        const results = await Promise.all(promises);
-        db.release()
-        res.json({ deleteTravelList: results });
-    } catch (error) {
-        console.error(error);
-    }
-})
-
 router.post('/getVideos', async (req, res) => {
     const { travel_id } = req.body;
     const checkStatusQuery = `SELECT * FROM travel WHERE travel_id = ?`;
@@ -103,6 +71,34 @@ router.post('/getVideos', async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /api/travel/uploadImages/{travel_id}:
+ *   post:
+ *     summary: 上传游记图片
+ *     tags: 
+ *       - 游记（小程序）
+ *     parameters:
+ *       - in: path
+ *         name: travel_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 相关旅行 ID
+ *       - in: formData
+ *         name: image
+ *         type: file
+ *         required: true
+ *         description: 要上传的图片文件
+ *       - in: formData
+ *         name: order
+ *         type: integer
+ *         required: true
+ *         description: 图片显示顺序
+ *     responses:
+ *       200:
+ *         description: 上传成功
+ */
 router.post('/uploadImages/:travel_id', uploadImage.single('image'), async (req, res) => {
     const file = req.file;
     const travel_id = req.params.travel_id;
@@ -129,6 +125,37 @@ router.post('/uploadImages/:travel_id', uploadImage.single('image'), async (req,
     }
 })
 
+/**
+ * @swagger
+ * /api/travel/updateOrder:
+ *   post:
+ *     summary: 更新游记图片顺序
+ *     tags: 
+ *       - 游记（小程序）
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               travel_id:
+ *                 type: string
+ *                 description: 旅行 ID
+ *               url:
+ *                 type: string
+ *                 description: 图片 URL
+ *               order:
+ *                 type: integer
+ *                 description: 显示顺序
+ *             required:
+ *               - travel_id
+ *               - url
+ *               - order
+ *     responses:
+ *       200:
+ *         description: 更新成功
+ */
 router.post('/updateOrder', async (req, res) => {
     const { travel_id, url, order } = req.body;
     try {
@@ -142,6 +169,29 @@ router.post('/updateOrder', async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /api/travel/uploadVideo/{travel_id}:
+ *   post:
+ *     summary: 上传游记视频
+ *     tags: 
+ *       - 游记（小程序）
+ *     parameters:
+ *       - in: path
+ *         name: travel_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 相关旅行 ID
+ *       - in: formData
+ *         name: video
+ *         type: file
+ *         required: true
+ *         description: 要上传的视频文件
+ *     responses:
+ *       200:
+ *         description: 视频上传成功
+ */
 router.post('/uploadVideo/:travel_id', uploadVideo.single('video'), async (req, res) => {
     const file = req.file;
     const travel_id = req.params.travel_id;
@@ -163,6 +213,65 @@ router.post('/uploadVideo/:travel_id', uploadVideo.single('video'), async (req, 
     }
 })
 
+/**
+ * @swagger
+ * /api/travel/deleteImages:
+ *   post:
+ *     tags:
+ *       - 游记（小程序）
+ *     summary: 删除某个游记的所有图片
+ *     description: 删除某个游记的所有图片
+ *     requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 travel_id:
+ *                   type: string
+ *                   description: 游记id
+ *                   example: 123
+ *     responses:
+ *       200:
+ *         description: 成功删除
+ */
+router.post('/deleteImages', async (req, res) => {
+    const { travel_id } = req.body;
+    try {
+        const db = await pool.getConnection();
+        const deleteQuery = `DELETE FROM image WHERE travel_id = ?`;
+        await db.query(deleteQuery, [travel_id]);
+        db.release();
+        res.json({ msg: '已删除与该 travel_id 相关的所有内容' });
+    } catch (error) {
+        console.error(error);
+    }
+})
+
+/**
+ * @swagger
+ * /api/travel/uploadPoster/{travel_id}:
+ *   post:
+ *     summary: 上传游记视频封面
+ *     tags: 
+ *       - 游记（小程序）
+ *     parameters:
+ *       - in: path
+ *         name: travel_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 旅行ID
+ *       - in: formData
+ *         name: poster
+ *         type: file
+ *         required: true
+ *         description: 要上传的海报文件
+ *     responses:
+ *       200:
+ *         description: 封面上传成功
+ */
 router.post('/uploadPoster/:travel_id', uploadPoster.single('poster'), async (req, res) => {
     const file = req.file;
     const travel_id = req.params.travel_id;
@@ -186,6 +295,48 @@ router.post('/uploadPoster/:travel_id', uploadPoster.single('poster'), async (re
     }
 })
 
+/**
+ * @swagger
+ * /api/travel/uploadText:
+ *   post:
+ *     summary: 上传游记文本
+ *     tags: 
+ *       - 游记（小程序）
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 description: 标题
+ *               content:
+ *                 type: string
+ *                 description: 内容
+ *               userId:
+ *                 type: string
+ *                 description: 用户ID
+ *             required:
+ *               - title
+ *               - content
+ *               - userId
+ *     responses:
+ *       200:
+ *         description: 标题和内容上传成功
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 msg:
+ *                   type: string
+ *                   description: 标题和内容上传成功的消息
+ *                 travel_id:
+ *                   type: string
+ *                   description: 生成的旅行ID
+ */
 router.post('/uploadText', async (req, res) => {
     const { title, content, userId } = req.body;
     const contentWithBr = content.replace(/\n/g, '<br>');
@@ -202,6 +353,37 @@ router.post('/uploadText', async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /api/travel/updateText:
+ *   post:
+ *     summary: 更新游记文本
+ *     tags: 
+ *       - 游记（小程序）
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *                 description: 标题
+ *               content:
+ *                 type: string
+ *                 description: 内容
+ *               travel_id:
+ *                 type: string
+ *                 description: 旅行ID
+ *             required:
+ *               - title
+ *               - content
+ *               - travel_id
+ *     responses:
+ *       200:
+ *         description: 文本更新成功
+ */
 router.post('/updateText', async (req, res) => {
     const { title, content, travel_id } = req.body;
     try {
@@ -215,6 +397,29 @@ router.post('/updateText', async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /api/travel/updateVideo/{travel_id}:
+ *   post:
+ *     summary: 更新游记视频
+ *     tags: 
+ *       - 游记（小程序）
+ *     parameters:
+ *       - in: path
+ *         name: travel_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 旅行ID
+ *       - in: formData
+ *         name: video
+ *         type: file
+ *         required: true
+ *         description: 要上传的视频文件
+ *     responses:
+ *       200:
+ *         description: 视频上传成功
+ */
 router.post('/updateVideo/:travel_id', uploadVideo.single('video'), async (req, res) => {
     const file = req.file;
     const travel_id = req.params.travel_id;
@@ -236,6 +441,29 @@ router.post('/updateVideo/:travel_id', uploadVideo.single('video'), async (req, 
     }
 })
 
+/**
+ * @swagger
+ * /api/travel/updatePoster/{travel_id}:
+ *   post:
+ *     summary: 更新视频封面
+ *     tags:
+ *       - 游记（小程序）
+ *     parameters:
+ *       - in: path
+ *         name: travel_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: 旅行ID
+ *       - in: formData
+ *         name: poster
+ *         type: file
+ *         required: true
+ *         description: 要上传的海报文件
+ *     responses:
+ *       200:
+ *         description: 上传成功
+ */
 router.post('/updatePoster/:travel_id', uploadPoster.single('poster'), async (req, res) => {
     const file = req.file;
     const travel_id = req.params.travel_id;
@@ -259,6 +487,67 @@ router.post('/updatePoster/:travel_id', uploadPoster.single('poster'), async (re
     }
 })
 
+/*****************************
+ * 
+ * 审核后台游记API
+ * 
+ ****************************/
+/**
+ * @swagger
+ * /api/travel/get:
+ *   get:
+ *     tags:
+ *       - 游记（审核后台）
+ *     summary: 获取所有未删除的游记
+ *     description: 获取所有未删除的游记
+ *     responses:
+ *       200:
+ *         description: 成功返回游记
+ */
+router.get('/get', async (req, res) => {
+    try {
+        const getTravelQuery = `SELECT * FROM travel WHERE status <> 4 ORDER BY created_at DESC`;
+        const db = await pool.getConnection()
+        const [travelList, _] = await db.query(getTravelQuery);
+
+        const promises = travelList.map(async (travel) => {
+            const getImagesQuery = `SELECT image_url FROM image WHERE travel_id = ?`;
+            const [imageResults] = await db.query(getImagesQuery, [travel.travel_id]);
+            const images = imageResults.map(image => image.image_url);
+            return { ...travel, imgs: images, key: travel.travel_id };
+        });
+
+        const results = await Promise.all(promises);
+        db.release()
+        res.json({ travelList: results });
+    } catch (error) {
+        console.error(error);
+    }
+});
+
+/**
+ * @swagger
+ * /api/travel/getById:
+ *   post:
+ *     tags:
+ *       - 游记（审核后台）
+ *     summary: 通过游记id获取游记内容
+ *     description: 通过游记id获取游记内容
+ *     requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 travel_id:
+ *                   type: string
+ *                   description: 游记id
+ *                   example: 123
+ *     responses:
+ *       200:
+ *         description: 获取游记成功
+ */
 router.post('/getById', async (req, res) => {
     const { travel_id } = req.body;
     const sql = `SELECT * FROM travel,user WHERE travel.travel_id=? AND travel.user_id=user.user_id  `
@@ -276,6 +565,64 @@ router.post('/getById', async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /api/travel/getDelete:
+ *   get:
+ *     tags:
+ *       - 游记（审核后台）
+ *     summary: 获取所有逻辑删除的游记
+ *     description: 获取所有逻辑删除的游记
+ *     responses:
+ *       200:
+ *         description: 成功返回游记
+ */
+router.get('/getDelete', async (req, res) => {
+    const getDeleteTravelQuery = `SELECT * FROM travel WHERE status='${4}'`
+    try {
+        const db = await pool.getConnection()
+        const [travelList] = await db.query(getDeleteTravelQuery)
+        const promises = travelList.map(async (travel) => {
+            const getImagesQuery = `SELECT image_url FROM image WHERE travel_id = ?`;
+            const [imageResults] = await db.query(getImagesQuery, [travel.travel_id]);
+            const images = imageResults.map(image => image.image_url);
+            return { ...travel, imgs: images, key: travel.travel_id };
+        });
+        const results = await Promise.all(promises);
+        db.release()
+        res.json({ deleteTravelList: results });
+    } catch (error) {
+        console.error(error);
+    }
+})
+
+/**
+ * @swagger
+ * /api/travel/pass:
+ *   post:
+ *     tags:
+ *       - 游记（审核后台）
+ *     summary: 通过游记
+ *     description: 通过游记
+ *     requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 travel_id:
+ *                   type: string
+ *                   description: 游记id
+ *                   example: 123
+ *                 role_id:
+ *                   type: string
+ *                   description: 角色id
+ *                   example: 123
+ *     responses:
+ *       200:
+ *         description: 已通过
+ */
 router.post('/pass', async (req, res) => {
     const { travel_id, role_id } = req.body;
     try {
@@ -291,6 +638,37 @@ router.post('/pass', async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /api/travel/reject:
+ *   post:
+ *     tags:
+ *       - 游记（审核后台）
+ *     summary: 拒绝通过某个游记
+ *     description: 拒绝通过某个游记
+ *     requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 travel_id:
+ *                   type: string
+ *                   description: 游记id
+ *                   example: 123
+ *                 role_id:
+ *                   type: string
+ *                   description: 角色id
+ *                   example: 123
+ *                 reason:
+ *                   type: string
+ *                   description: 拒绝理由
+ *                   example: 违规内容
+ *     responses:
+ *       200:
+ *         description: 已拒绝
+ */
 router.post('/reject', async (req, res) => {
     const { travel_id, reason, role_id } = req.body;
 
@@ -307,6 +685,29 @@ router.post('/reject', async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /api/travel/delete:
+ *   post:
+ *     tags:
+ *       - 游记（审核后台）
+ *     summary: 逻辑删除某个游记
+ *     description: 逻辑删除某个游记
+ *     requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 travel_id:
+ *                   type: string
+ *                   description: 游记id
+ *                   example: 123
+ *     responses:
+ *       200:
+ *         description: 已逻辑删除
+ */
 router.post('/delete', async (req, res) => {
     const { travel_id } = req.body;
 
@@ -321,6 +722,29 @@ router.post('/delete', async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /api/travel/recover:
+ *   post:
+ *     tags:
+ *       - 游记（审核后台）
+ *     summary: 恢复某个游记的数据
+ *     description: 恢复某个游记的数据
+ *     requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 travel_id:
+ *                   type: string
+ *                   description: 游记id
+ *                   example: 123
+ *     responses:
+ *       200:
+ *         description: 数据已恢复
+ */
 router.post('/recover', async (req, res) => {
     const { travel_id } = req.body;
     try {
@@ -334,19 +758,29 @@ router.post('/recover', async (req, res) => {
     }
 })
 
-router.post('/deleteImages', async (req, res) => {
-    const { travel_id } = req.body;
-    try {
-        const db = await pool.getConnection();
-        const deleteQuery = `DELETE FROM image WHERE travel_id = ?`;
-        await db.query(deleteQuery, [travel_id]);
-        db.release();
-        res.json({ msg: '已删除与该 travel_id 相关的所有内容' });
-    } catch (error) {
-        console.error(error);
-    }
-})
-
+/**
+ * @swagger
+ * /api/travel/getTravelInfoAPI:
+ *   post:
+ *     tags:
+ *       - 游记（审核后台）
+ *     summary: 返回数据库中关于游记的信息
+ *     description: 返回数据库中关于游记四个状态的数量，和当前用户的审核量
+ *     requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 role_id:
+ *                   type: string
+ *                   description: 角色
+ *                   example: 06053b94-ba33-4475-94f4-8fa381c16078
+ *     responses:
+ *       200:
+ *         description: 成功返回游记
+ */
 router.post('/getTravelInfoAPI', async (req, res) => {
     const { role_id } = req.body;
     try {

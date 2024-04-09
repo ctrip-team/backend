@@ -12,7 +12,7 @@ const uploadAvatar = multer({ dest: path.join(__dirname, '../uploads/avatars') }
  * /api/user/test:
  *   get:
  *     tags:
- *       - 用户相关
+ *       - 用户
  *     summary: 获取所有用户（测试接口，看连接是否正常）
  *     description: 从数据库返回所有的用户列表
  *     responses:
@@ -30,13 +30,12 @@ router.get('/test', async (req, res) => {
     }
 });
 
-
 /**
  * @swagger
  * /api/user/login:
  *   post:
  *     tags:
- *       - 用户相关
+ *       - 用户
  *     summary: 用户登录
  *     description: 用户登录
  *     requestBody:
@@ -75,13 +74,12 @@ router.post('/login', async (req, res) => {
     }
 })
 
-
 /**
  * @swagger
  * /api/user/register:
  *   post:
  *     tags:
- *       - 用户相关
+ *       - 用户
  *     summary: 用户注册
  *     description: 用户注册
  *     requestBody:
@@ -126,6 +124,29 @@ router.post('/register', async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /api/user/getById:
+ *   post:
+ *     tags:
+ *       - 用户
+ *     summary: 根据id获取用户信息
+ *     description: 根据id获取用户信息
+ *     requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 user_id:
+ *                   type: string
+ *                   description: 用户id
+ *                   example: 123
+ *     responses:
+ *       200:
+ *         description: 获取成功
+ */
 router.post('/getById', async (req, res) => {
     const { user_id } = req.body
     const sql = `SELECT * FROM user WHERE user_id = ?`;
@@ -140,7 +161,37 @@ router.post('/getById', async (req, res) => {
     }
 })
 
-
+/**
+ * @swagger
+ * /api/user/update:
+ *   post:
+ *     summary: 更新用户信息和头像
+ *     tags:
+ *          - 用户
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *                 description: 用户名
+ *               password:
+ *                 type: string
+ *                 description: 密码
+ *               userId:
+ *                 type: string
+ *                 description: 用户ID
+ *               avatar:
+ *                 type: string
+ *                 format: binary
+ *                 description: 头像文件
+ *     responses:
+ *       200:
+ *         description: 更新成功
+ */
 router.post('/update', uploadAvatar.single('avatar'), async (req, res) => {
     const { username, password, userId } = req.body;
     const avatarFile = req.file;
@@ -164,7 +215,33 @@ router.post('/update', uploadAvatar.single('avatar'), async (req, res) => {
     }
 })
 
-
+/**
+ * @swagger
+ * /api/user/updateInfo:
+ *   post:
+ *     tags:
+ *       - 用户
+ *     summary: 仅更新用户信息
+ *     description: 仅更新用户信息
+ *     requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 username:
+ *                   type: string
+ *                   description: 用户名
+ *                   example: hyperyz
+ *                 password:
+ *                   type: string
+ *                   description: 密码
+ *                   example: 123
+ *     responses:
+ *       200:
+ *         description: 更新成功
+ */
 router.post('/updateInfo', async (req, res) => {
     const { username, password, userId } = req.body;
     const checkUserQuery = `SELECT * FROM user WHERE user_id = ?`;
