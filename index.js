@@ -60,7 +60,6 @@ app.use((err, req, res, next) => {
 });
 
 
-
 // 创建服务
 function createServer() {
     if (process.env.ENV === "production") {
@@ -81,9 +80,5 @@ function createServer() {
 const server = createServer();
 server.listen(process.env.PORT, () => {
     console.log(`服务已启动在${process.env.PORT}端口`);
+    console.log(`API文档，查询${process.env.BASE_URL}/api-docs`);
 })
-
-// app.listen(PORT, () => {
-//     console.log(`Server running at http://192.168.0.102:${PORT}`);
-//     console.log(`For API docs, http://192.168.0.102:${PORT}/api-docs`);
-// });

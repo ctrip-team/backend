@@ -50,7 +50,7 @@ router.post('/login', async (req, res) => {
 
 /**
  * @swagger
- * /api/reviewer/register:
+ * /api/role/register:
  *   post:
  *     tags:
  *       - 审核员相关
@@ -98,6 +98,29 @@ router.post('/register', checkTokenMiddleware, async (req, res) => {
     }
 })
 
+/**
+ * @swagger
+ * /api/role/delete:
+ *   post:
+ *     tags:
+ *       - 审核员相关
+ *     summary: 删除审核员
+ *     description: 删除审核员
+ *     requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 username:
+ *                   type: string
+ *                   description: 审核员账号
+ *                   example: hyperyz
+ *     responses:
+ *       200:
+ *         description: 删除成功
+ */
 router.post('/delete', checkTokenMiddleware, async (req, res) => {
     const { username } = req.body
     const sql = `DELETE FROM role WHERE username = ?`;
@@ -113,6 +136,41 @@ router.post('/delete', checkTokenMiddleware, async (req, res) => {
 
 })
 
+/**
+ * @swagger
+ * /api/role/update:
+ *   post:
+ *     tags:
+ *       - 审核员相关
+ *     summary: 更新审核员信息
+ *     description: 更新审核员信息
+ *     requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 username:
+ *                   type: string
+ *                   description: 用户名
+ *                   example: hyperyz
+ *                 password:
+ *                   type: string
+ *                   description: 密码
+ *                   example: 123
+ *                 role:
+ *                   type: string
+ *                   description: 角色
+ *                   example: 管理员
+ *                 role_id:
+ *                   type: string
+ *                   description: id
+ *                   example: 1111
+ *     responses:
+ *       200:
+ *         description: 更新成功
+ */
 router.post('/update', checkTokenMiddleware, async (req, res) => {
     const { username, role, password, role_id } = req.body
     const sql = `UPDATE role SET username = ?, is_admin = ?, password = ? WHERE role_id = ?;`;
@@ -128,7 +186,31 @@ router.post('/update', checkTokenMiddleware, async (req, res) => {
 
 })
 
-
+/**
+ * @swagger
+ * /api/role/getRoles/{start}/{num}:
+ *   get:
+ *     tags:
+ *       - 审核员相关
+ *     summary: 获取指定数量的审核员信息
+ *     description: 从start开始读取num个审核员信息
+ *     parameters:
+ *       - in: path
+ *         name: start
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: 起始位置
+ *       - in: path
+ *         name: num
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: 返回角色的数量
+ *     responses:
+ *       200:
+ *         description: 获取成功
+ */
 router.get('/getRoles/:start/:num', checkTokenMiddleware, async (req, res) => {
     const { start, num } = req.params
     const sql = `SELECT * FROM role LIMIT ${parseInt(start)}, ${parseInt(num)}`;
@@ -147,6 +229,18 @@ router.get('/getRoles/:start/:num', checkTokenMiddleware, async (req, res) => {
 
 })
 
+/**
+ * @swagger
+ * /api/role/getTop:
+ *   get:
+ *     tags:
+ *       - 审核员相关
+ *     summary: 获取审核量最高的5位审核员信息
+ *     description: 获取审核量最高的5位审核员信息
+ *     responses:
+ *       200:
+ *         description: 获取成功
+ */
 router.get('/getTop', checkTokenMiddleware, async (req, res) => {
     const sql = `SELECT * FROM role ORDER BY review_count DESC LIMIT 5;`;
     try {
