@@ -44,7 +44,7 @@ router.get('/mytravels', async (req, res) => {
 
 /**
  * @swagger
- * /apu/my/deltravel:
+ * /api/my/deltravel:
  *   post:
  *     tags:
  *       - 小程序
@@ -106,7 +106,7 @@ router.post('/deltravel', async (req, res) => {
  *                   type: string
  *                   description: 用户密码
  *                   example: 123
- *                 code：
+ *                 code:
  *                   type: string
  *                   description: 用于进入微信服务器查询用户唯一openid时使用的临时验证码
  *     responses:
@@ -174,11 +174,11 @@ router.post('/register', async (req, res) => {
  *                   type: string
  *                   description: 系统默认设置的密码
  *                   example: 123456x
- *                avatar:
+ *                 avatar:
  *                   type: string
  *                   description: 用户微信头像url
  *                   example: https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png
- *                openId:
+ *                 openId:
  *                   type: string
  *                   description: 用户微信openid
  *                   example: IoFZp0XzRqVi1U
