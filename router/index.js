@@ -5,6 +5,34 @@ const router = express.Router()
 
 /**
  * @swagger
+ * /api/index/indexfirst:
+ *   get:
+ *     tags:
+ *       - 小程序
+ *     summary: 首次获取首页游记信息
+ *     description: 从数据库全部的处于已发布状态的游记信息,随机选取6条数据进行返回
+ *     responses:
+ *       200:
+ *         description: 成功返回一部分游记信息
+ */
+router.get('/indexfirst', async (req, res) => {
+  const selectPassTravals = `SELECT u.username,u.avatar,t.travel_id,t.user_id,t.title,t.content,t.views,t.status,t.created_at,t.reason,t.video_url,COALESCE(t.video_url, i.image_url) AS image_url,COALESCE(t.poster, i.image_url) AS poster_url FROM travel t JOIN user u ON t.user_id = u.user_id LEFT JOIN image i ON t.travel_id = i.travel_id AND i.display_order = 0 WHERE t.status = 2 ORDER BY RAND() LIMIT 6;`
+  try {
+    const db = await pool.getConnection()
+    const [results, _] = await db.query(selectPassTravals)
+    if (results.length > 0) {
+      res.json({ msg: '查询成功', code: 2000, data: results });
+    } else {
+      res.json({ msg: '查询失败', code: 2001 });
+    }
+    db.release()
+  } catch (error) {
+    console.error(error);
+  }
+})
+
+/**
+ * @swagger
  * /api/index/index:
  *   get:
  *     tags:
