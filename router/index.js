@@ -49,9 +49,7 @@ router.get('/index', async (req, res) => {
     const db = await pool.getConnection()
     const [results, _] = await db.query(selectPassTravals)
     if (results.length > 0) {
-      let resu = results.sort(() => Math.random() - 0.5);
-      let re = resu.slice(0, 10)
-      res.json({ msg: '查询成功', code: 2000, data: re });
+      res.json({ msg: '查询成功', code: 2000, data: results });
     } else {
       res.json({ msg: '查询失败', code: 2001 });
     }
