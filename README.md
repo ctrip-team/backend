@@ -11,7 +11,7 @@
 `npm start` 启动后端
 
 ## API在线查看地址
-
+[API文档](https://www.hyperyz.com:3000/api-docs)
 
 
 ## 数据库
