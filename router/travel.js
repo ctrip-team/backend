@@ -395,7 +395,7 @@ router.post('/updateText', async (req, res) => {
     const { title, content, travel_id } = req.body;
     try {
         const db = await pool.getConnection();
-        const updateQuery = `UPDATE travel SET title = ?, content = ? WHERE travel_id = ?`;
+        const updateQuery = `UPDATE travel SET title = ?, content = ?, status='0' WHERE travel_id = ?`;
         await db.query(updateQuery, [title, content, travel_id]);
         db.release();
         res.json({ msg: '文本更新成功' });
@@ -437,7 +437,7 @@ router.post('/updateVideo/:travel_id', uploadVideo.single('video'), async (req, 
         const newFilePath = `uploads/videos/${file.originalname}`;
         await fs.writeFile(newFilePath, data);
         await fs.unlink(filePath);
-        const insertVideoQuery = `UPDATE travel SET video_url = ? WHERE travel_id = ?`
+        const insertVideoQuery = `UPDATE travel SET video_url = ? , status='0' WHERE travel_id = ?`
         const db = await pool.getConnection();
         await db.query(insertVideoQuery, [videoUrl, travel_id]);
         db.release();
@@ -483,7 +483,7 @@ router.post('/updatePoster/:travel_id', uploadPoster.single('poster'), async (re
         const posterUrl = `${process.env.BASE_URL}/posters/${md5Hash}.${ext}`;
         await fs.writeFile(newFilePath, data);
         await fs.unlink(filePath);
-        const insertVideoQuery = `UPDATE travel SET poster = ? WHERE travel_id = ?`
+        const insertVideoQuery = `UPDATE travel SET poster = ? ,status='0' WHERE travel_id = ?`
         const db = await pool.getConnection();
         await db.query(insertVideoQuery, [posterUrl, travel_id]);
         db.release();
